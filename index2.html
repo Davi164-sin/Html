@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ejemplo</title>
+</head>
+<body>
+    <h1>Ejemplo de petición GET</h1>
+    <button onclick="enviarPeticion()">Enviar petición</button>
+    <div id="resultado"></div>
+
+    <script>
+        function enviarPeticion() {
+            fetch('http:                                                
+              .then(response => response.json())
+              .then(datos => {
+                  document.getElementById('resultado').innerHTML = `Nombre: ${datos.nombre}, Edad: ${datos.edad}`;
+              });
+        }
+    </script>
+</body>
+</html>
