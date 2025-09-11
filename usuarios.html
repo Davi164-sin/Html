@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil</title>
+</head>
+<body>
+    <h2>Mi Perfil</h2>
+    <form action="/perfil" method="post">
+        <label for="nombre">Nombre:</label><br>
+        <input type="text" id="nombre" name="nombre" value="Nombre del usuario" readonly><br><br>
+
+        <label for="email">Correo:</label><br>
+        <input type="email" id="email" name="email" value="correo@ejemplo.com" readonly><br><br>
+
+        <label for="bio">Biografía:</label><br>
+        <textarea id="bio" name="bio" rows="4" cols="40" placeholder="Escribe algo sobre ti..."></textarea><br><br>
+
+        <button type="submit">Actualizar Perfil</button>
+    </form>
+</body>
+</html>
