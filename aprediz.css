@@ -1,0 +1,63 @@
+
+body {
+ max-width: 1200px;
+  font-family: sans-serif;
+  background: #3569;
+  margin: auto;
+  padding: 0;
+  font-size: 17px;
+}
+
+h1 {
+ width: 100
+ padding: 10px;
+ font-size: 20px;
+ text-align: center;
+
+}
+
+
+p {
+ width: 100%;
+ font-family: sans-serif;
+ padding: 0;
+ font-size: 15px;
+ text-align: center;
+ box-sizing: border-box;
+ margin: 0;
+ color: white;
+ background-color: #3689;
+}
+
+
+
+
+.box {
+ max-width: 1200px;
+  height: 500px; /* Aumenté la altura para que quepa la imagen */
+  font-family: sans-serif;
+  background: #3700;
+  color: #00009;
+  padding: 5px;
+  text-align: left; /* Cambié a izquierda para que se alinee con la imagen>
+  font-size: 18px;
+  display: flex; /* Agregué display flex para alinear la imagen y el texto>
+  align-items: center; /* Centré verticalmente la imagen y el texto */
+  margin: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  margin-top: 10px;
+}
+
+
+header {
+ max-width: 1200px;
+  height: 100px;
+  font-family: sans-serif;
+  margin: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #235;
+  margin-top: 10px;
+}
