@@ -5,11 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor de Código con CodeMirror</title>
   
-  <!-- Incluir CSS de CodeMirror -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.css">
+  <!-- Resource hints to speed up CDN connection -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+  <!-- Load CSS without render-blocking -->
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.css" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.css">
+  </noscript>
   
   <!-- Opcional: Tema de CodeMirror (por ejemplo, theme material) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/theme/material.min.css">
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/theme/material.min.css" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/theme/material.min.css">
+  </noscript>
   <style>
      .funciones {
        width: 93%;
@@ -33,42 +43,35 @@
   
   
   <!-- Incluir JavaScript de CodeMirror -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/codemirror.min.js"></script>
   
   <!-- Incluir modo JavaScript para resaltado de sintaxis -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/javascript/javascript.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.63.1/mode/javascript/javascript.min.js"></script>
   
   <!-- Script para inicializar CodeMirror -->
   <script>
-    // Obtener el elemento textarea
-    var myTextArea = document.getElementById('myTextArea');
-    
-    // Inicializar CodeMirror
-    var editor = CodeMirror.fromTextArea(myTextArea, {
-      lineNumbers: true,
-      mode: "javascript",
-      theme: "material",
-      autofocus: true,
-      lineWrapping: true
+    // Initialize after DOM is ready and deferred scripts loaded
+    window.addEventListener('DOMContentLoaded', function () {
+      var myTextArea = document.getElementById('myTextArea');
+      var editor = CodeMirror.fromTextArea(myTextArea, {
+        lineNumbers: true,
+        mode: 'javascript',
+        theme: 'material',
+        autofocus: true,
+        lineWrapping: true
+      });
+
+      var runButton = document.getElementById('runButton');
+      runButton.addEventListener('click', function () {
+        var code = editor.getValue();
+        try {
+          console.clear();
+          eval(code);
+        } catch (error) {
+          console.error('Error:', error.message);
+        }
+      });
     });
-    
-    // Obtener el botón "Run" por su ID
-    var runButton = document.getElementById('runButton');
-    
-    // Agregar un listener al botón para ejecutar el código
-    runButton.addEventListener('click', function() {
-      // Obtener el código actual del editor
-      var code = editor.getValue();
-      
-      try {
-        console.clear();
-        eval(code);
-      } catch (error) {
-        console.error('Error:', error.message);
-      }
-    });
-    
-    
   </script>
   <div class="funciones">
     <h2>funciones para praticar</h2>
