@@ -35,8 +35,14 @@
         })
       })
       .then((response) => response.json())
-      .then((data) => document.whirete(data))
-      .catch((error) => console.error(error));
+      .then((data) => {
+        const mensaje = data.mensaje || JSON.stringify(data);
+        document.getElementById('mensaje').textContent = mensaje;
+      })
+      .catch((error) => {
+        document.getElementById('mensaje').textContent = 'Error: ' + error.message;
+        console.error(error);
+      });
     });
   </script>
 </body>

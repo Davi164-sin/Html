@@ -2,14 +2,14 @@
 body {
  max-width: 1200px;
   font-family: sans-serif;
-  background: #3569;
+  background-color: rgba(51, 85, 102, 0.6);
   margin: auto;
   padding: 0;
   font-size: 17px;
 }
 
 h1 {
- width: 100
+ width: 100%;
  padding: 10px;
  font-size: 20px;
  text-align: center;
@@ -26,7 +26,7 @@ p {
  box-sizing: border-box;
  margin: 0;
  color: white;
- background-color: #3689;
+ background-color: rgba(54, 104, 153, 0.6);
 }
 
 
@@ -36,12 +36,12 @@ p {
  max-width: 1200px;
   height: 500px; /* Aumenté la altura para que quepa la imagen */
   font-family: sans-serif;
-  background: #3700;
-  color: #00009;
+  background-color: #370;
+  color: #000;
   padding: 5px;
-  text-align: left; /* Cambié a izquierda para que se alinee con la imagen>
+  text-align: left; /* Cambié a izquierda para que se alinee con la imagen */
   font-size: 18px;
-  display: flex; /* Agregué display flex para alinear la imagen y el texto>
+  display: flex; /* Agregué display flex para alinear la imagen y el texto */
   align-items: center; /* Centré verticalmente la imagen y el texto */
   margin: auto;
   border: 1px solid #ccc;
