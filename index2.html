@@ -10,10 +10,14 @@
 
     <script>
         function enviarPeticion() {
-            fetch('http:                                                
+            fetch('/archivos')
               .then(response => response.json())
-              .then(datos => {
-                  document.getElementById('resultado').innerHTML = `Nombre: ${datos.nombre}, Edad: ${datos.edad}`;
+              .then(lista => {
+                  const html = '<ul>' + lista.map(item => `<li>${item}</li>`).join('') + '</ul>';
+                  document.getElementById('resultado').innerHTML = html;
+              })
+              .catch(err => {
+                  document.getElementById('resultado').textContent = 'Error: ' + err.message;
               });
         }
     </script>
