@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Gastos</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .card { background: #16213e; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 400px; border: 1px solid #0f3460; }
+        h2 { color: #4ecca3; margin-bottom: 20px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: #0f3460; color: white; font-size: 16px; box-sizing: border-box; }
+        input::placeholder { color: #888; }
+        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #ff4d6d; transform: scale(1.02); }
+        .total-container { margin-top: 25px; padding: 15px; background: #0f3460; border-radius: 10px; text-align: center; }
+        .total-label { font-size: 0.9rem; color: #4ecca3; text-transform: uppercase; display: block; margin-bottom: 8px; }
+        #resultado { font-size: 2rem; font-weight: bold; color: #4ecca3; }
+        .gastos-list { margin-top: 25px; max-height: 300px; overflow-y: auto; }
+        .gasto-item { background: #0f3460; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #4ecca3; }
+        .gasto-concepto { flex: 1; text-align: left; }
+        .gasto-monto { color: #4ecca3; font-weight: bold; margin: 0 15px; }
+        .btn-eliminar { background: #e94560; border: none; color: white; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; }
+        .btn-eliminar:hover { background: #ff4d6d; }
+        .btn-limpiar { background: #0f3460; color: #e94560; margin-top: 15px; border: 1px solid #e94560; }
+        .btn-limpiar:hover { background: #e94560; color: white; }
+        .empty-message { text-align: center; color: #888; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>💰 Mis Gastos</h2>
+        <input type="text" id="concepto" placeholder="¿En qué gastaste?">
+        <input type="number" id="monto" placeholder="Monto $" min="0" step="0.01">
+        <button onclick="añadirGasto()">Sumar Gasto</button>
+        
+        <div class="total-container">
+            <span class="total-label">Total Acumulado</span>
+            <span id="resultado">$0</span>
+        </div>
+
+        <div class="gastos-list" id="gastos-list">
+            <div class="empty-message">No hay gastos aún</div>
+        </div>
+
+        <button class="btn-limpiar" onclick="limpiarTodo()">🗑️ Limpiar Todo</button>
+    </div>
+
+    <script>
+        let gastos = [];
+
+        // Cargar datos al iniciar
+        function cargarGastos() {
+            const datosGuardados = localStorage.getItem('gastos');
+            if (datosGuardados) {
+                gastos = JSON.parse(datosGuardados);
+                actualizarUI();
+            }
+        }
+
+        // Guardar datos en localStorage
+        function guardarGastos() {
+            localStorage.setItem('gastos', JSON.stringify(gastos));
+        }
+
+        // Añadir nuevo gasto
+        function añadirGasto() {
+            const inputMonto = document.getElementById('monto');
+            const inputConcepto = document.getElementById('concepto');
+            const monto = parseFloat(inputMonto.value);
+            const concepto = inputConcepto.value.trim();
+
+            if (concepto === '') {
+                alert("Por favor, ingresa un concepto");
+                return;
+            }
+
+            if (!isNaN(monto) && monto > 0) {
+                gastos.push({
+                    id: Date.now(),
+                    concepto: concepto,
+                    monto: monto
+                });
+                guardarGastos();
+                actualizarUI();
+                inputMonto.value = '';
+                inputConcepto.value = '';
+                inputConcepto.focus();
+            } else {
+                alert("Por favor, ingresa un monto válido");
+            }
+        }
+
+        // Eliminar gasto específico
+        function eliminarGasto(id) {
+            gastos = gastos.filter(g => g.id !== id);
+            guardarGastos();
+            actualizarUI();
+        }
+
+        // Limpiar todos los gastos
+        function limpiarTodo() {
+            if (gastos.length === 0) return;
+            if (confirm('¿Estás seguro de que deseas eliminar todos los gastos?')) {
+                gastos = [];
+                guardarGastos();
+                actualizarUI();
+            }
+        }
+
+        // Actualizar la UI
+        function actualizarUI() {
+            const total = gastos.reduce((sum, g) => sum + g.monto, 0);
+            document.getElementById('resultado').innerText = '$' + total.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const listContainer = document.getElementById('gastos-list');
+            if (gastos.length === 0) {
+                listContainer.innerHTML = '<div class="empty-message">No hay gastos aún</div>';
+            } else {
+                listContainer.innerHTML = gastos.map(gasto => `
+                    <div class="gasto-item">
+                        <div class="gasto-concepto">${gasto.concepto}</div>
+                        <div class="gasto-monto">$${gasto.monto.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <button class="btn-eliminar" onclick="eliminarGasto(${gasto.id})">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Permitir añadir gasto con Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('monto').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') añadirGasto();
+            });
+            document.getElementById('concepto').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') document.getElementById('monto').focus();
+            });
+            cargarGastos();
+        });
+    </script>
+</body>
+</html>
