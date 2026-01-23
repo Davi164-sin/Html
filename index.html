@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>TaskFlow - Mis Tareas</title>
+    <link rel="stylesheet" href="/aprendiz.css">
+    <style>
+        #lista-tareas { background: #f4f4f4; padding: 15px; border-radius: 8px; margin-top: 20px; color: #333; min-height: 50px; }
+        .tarea-item { border-bottom: 1px solid #ccc; padding: 8px 0; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 style="text-align:center;">TaskFlow Mobile</h1>
+        <form id="task-form" style="display:flex; gap:10px; justify-content:center;">
+            <input type="text" id="nombre-tarea" placeholder="Nueva tarea..." required>
+            <button type="submit">Enviar</button>
+        </form>
+    </header>
+    <main>
+        <div style="padding: 20px;">
+            <h2>Lista de Tareas</h2>
+            <div id="lista-tareas">Cargando...</div>
+        </div>
+    </main>
+    <script>
+        const form = document.getElementById('task-form');
+        const lista = document.getElementById('lista-tareas');
+        async function cargarTareas() {
+            try {
+                const res = await fetch('/api/tasks');
+                const tareas = await res.json();
+                lista.innerHTML = tareas.map(t => "<div class='tarea-item'>📌 " + (t.nombre || t) + "</div>").join('') || 'No hay tareas.';
+            } catch (e) { lista.innerHTML = 'Error al cargar'; }
+        }
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre-tarea').value;
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre })
+            });
+            document.getElementById('nombre-tarea').value = '';
+            cargarTareas();
+        });
+        cargarTareas();
+    </script>
+</body>
+</html>
