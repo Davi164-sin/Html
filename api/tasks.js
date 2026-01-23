@@ -6,5 +6,8 @@ export default function handler(req, res) {
     const { nombre } = req.body;
     if (nombre) tasks.push({ nombre });
     res.status(200).json(tasks);
+  } else if (req.method === 'DELETE') {
+    tasks = [];
+    res.status(200).json(tasks);
   }
 }
