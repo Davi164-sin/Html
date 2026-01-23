@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Gastos</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #16213e; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 350px; text-align: center; border: 1px solid #0f3460; }
+        h2 { color: #4ecca3; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: #0f3460; color: white; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #ff4d6d; transform: scale(1.02); }
+        .total-container { margin-top: 25px; padding: 15px; background: #0f3460; border-radius: 10px; }
+        .total-label { font-size: 0.9rem; color: #4ecca3; text-transform: uppercase; }
+        #resultado { font-size: 2rem; font-weight: bold; display: block; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>💰 Mis Gastos</h2>
+        <input type="text" id="concepto" placeholder="¿En qué gastaste?">
+        <input type="number" id="monto" placeholder="Monto $">
+        <button onclick="añadirGasto()">Sumar Gasto</button>
+        <div class="total-container">
+            <span class="total-label">Total Acumulado</span>
+            <span id="resultado">$0</span>
+        </div>
+    </div>
+
+    <script>
+        let total = 0;
+        function añadirGasto() {
+            const inputMonto = document.getElementById('monto');
+            const inputConcepto = document.getElementById('concepto');
+            const monto = parseFloat(inputMonto.value);
+
+            if (!isNaN(monto) && monto > 0) {
+                total += monto;
+                document.getElementById('resultado').innerText = '$' + total.toLocaleString();
+                inputMonto.value = '';
+                inputConcepto.value = '';
+            } else {
+                alert("Por favor, ingresa un monto válido");
+            }
+        }
+    </script>
+</body>
+</html>
