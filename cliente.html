@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Rápido</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .box { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #333; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h3>📝 Nuevo Registro</h3>
+        <input type="text" id="n" placeholder="Nombre completo">
+        <input type="number" id="d" placeholder="Documento / ID">
+        <select id="t">
+            <option value="General">General</option>
+            <option value="VIP">VIP</option>
+        </select>
+        <button onclick="add()">REGISTRAR</button>
+    </div>
+
+    <div class="box">
+        <h3>📊 Total: <span id="count">0</span></h3>
+        <table>
+            <thead><tr><th>Nombre</th><th>ID</th><th>Tipo</th></tr></thead>
+            <tbody id="list"></tbody>
+        </table>
+        <br>
+        <button style="background:#555" onclick="csv()">DESCARGAR EXCEL (CSV)</button>
+    </div>
+
+<script>
+    // CARGAR DATOS LOCALES
+    let db = JSON.parse(localStorage.getItem('regs')) || [];
+    
+    // URL DE TU API (YA CONFIGURADA)
+    const MI_API = "https://html-65rk6d34w-david-s-projects-fe8f3f6b.vercel.app/api/guardar";
+
+    function upd() {
+        const list = document.getElementById('list');
+        list.innerHTML = db.map(p => `<tr><td>${p.n}</td><td>${p.d}</td><td>${p.t}</td></tr>`).join('');
+        document.getElementById('count').innerText = db.length;
+        localStorage.setItem('regs', JSON.stringify(db));
+    }
+
+    async function add() {
+        const n = document.getElementById('n').value;
+        const d = document.getElementById('d').value;
+        const t = document.getElementById('t').value;
+
+        if(!n || !d) return alert('Por favor rellena los campos');
+
+        // 1. Guardar en el celular (Local)
+        const nuevo = { n, d, t };
+        db.unshift(nuevo);
+        upd();
+
+        // 2. ENVIAR A LA COMPUTADORA (A TRAVÉS DE LA API)
+        // Usamos fetch en lugar de una etiqueta <a> para que los datos sí viajen
+        try {
+            const respuesta = await fetch(MI_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: n,
+                    id: d,
+                    tipo: t,
+                    fecha: new Date().toLocaleString()
+                })
+            });
+
+            if(respuesta.ok) {
+                console.log("Sincronizado con la PC");
+            }
+        } catch (error) {
+            console.log("Error de red: Se guardó solo en el celular");
+        }
+
+        // Limpiar campos
+        document.getElementById('n').value = '';
+        document.getElementById('d').value = '';
+    }
+
+    function csv() {
+        if(db.length === 0) return alert('No hay datos para exportar');
+        let content = "data:text/csv;charset=utf-8,Nombre,ID,Tipo\n" + db.map(p => `${p.n},${p.d},${p.t}`).join("\n");
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(content));
+        link.setAttribute("download", "registros_evento.csv");
+        link.click();
+    }
+
+    // Mostrar datos al abrir la app
+    upd();
+</script>
+</body>
+</html>
