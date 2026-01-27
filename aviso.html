@@ -24,13 +24,14 @@
     <input type="text" id="cliente" placeholder="Nombre del Cliente">
     <input type="text" id="telefono" placeholder="WhatsApp (ej: 521...)">
     <input type="text" id="modelo" placeholder="Modelo del Celular">
-
+    <input type="text" id="reparacion" placeholder="tipo de daño">
+    <input type="text" id="precio" placeholder="precio de reparacion">
     <button class="btn-qr" onclick="generarQR()">1. GENERAR QR DE ESTADO</button>
-
     <div id="qrcode"></div>
 
     <button class="btn-wa" onclick="enviarAviso()">2. ENVIAR AVISO POR WHATSAPP</button>
     <p class="footer-text">El QR enviará al cliente a la página de "Aviso".</p>
+    
 </div>
 
 <script>
@@ -61,8 +62,10 @@
     function enviarAviso() {
         const tel = document.getElementById('telefono').value;
         const mod = document.getElementById('modelo').value;
+        cosnt rpa = document.geteElementById('repacion').vule;
+        const prc = document.geteElementById('precio').value;
         if(!tel || !mod) return alert("Faltan datos");
-
+        alert("bienvenido")
         const msg = `¡Hola! Te informamos que tu ${mod} ya está listo en el taller. ¡Puedes pasar por él!`;
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     }
