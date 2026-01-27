@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8"> 
+    <meta name="description" content="gestion de tareas y aplicaciones mobiles"> 
+    <meta name="keywords" content="tareas, app, mantenimiento"> 
+    <meta name="author" content="david achipiz muriel">
+    <title>TaskFlow - Mis Tareas</title>
+
+
+    <style>
+        body { 
+         font-family: sans-serif;
+         padding: 20px; 
+         background: linear-gradient( 235deg, #8a56 50%, #0009, 100%); 
+         }
+        /* Estilo para el menú de navegación */
+        nav {
+        background-color: #333;
+        padding: 10px;
+        border-radius:8px;
+        margin-bottom: 20px;
+        display: flex
+        gap: 10px; justify-content: center;
+          }
+        nav a {
+         color: white; text-decoration: 
+         none; font-weight:
+         bold; font-size: 14px;
+         background: #555;
+         padding: 5px 10px;
+         border-radius: 4px; }
+        
+        #task-form {
+        9display: flex;
+        gap: 10px; margin-bottom: 20px;
+        }
+        input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 5px
+        border: 10px solid #ccc;
+        width: 100%;
+        }
+        button {
+        padding: 10px; background-color: #2ecc71;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+        #lista-tareas {
+         background-color: white;
+         padding: 15px;
+         border-radius: 8px;
+         box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        .tarea-item {
+         border-bottom: 1px solid #eee; padding: 10px 0;
+         }
+        
+         btn-borrar {
+         background-color: #e54c4a;
+         width: 100%;
+         margin-top: 20px;
+         cursor: pointer;
+         } 
+        .form_input {
+         background-color: #6e05;
+         padding: 6px 20px;
+         border: 1px solid black;
+         }
+
+    </style>
+</head>
+<body>
+   
+
+    <h1>TaskFlow Mobile</h1>
+
+    <nav>
+        <a href="code-box.html">CODE</a>
+        <a href="cliente.html" style="background: #2563eb;">REGISTRO CLIENTE</a>
+        <a href="aviso.html"> app aviso</a>
+    </nav>
+    <form id="task-form">
+        <input class="form-input" type="text" id="nombre-tarea" placeholder="Nueva tarea..." required>
+        <button type="submit">Añadir</button>
+    </form>
+    <div id="lista-tareas">Cargando...</div>
+    <button id="btn-limpiar" class="btn-borrar">Limpiar todas las tareas</button> 
+    <script>
+        const form = document.getElementById('task-form');
+        const lista = document.getElementById('lista-tareas');
+        const btnLimpiar = document.getElementById('btn-limpiar');
+
+        // Esta función carga lo que hay en tu computadora/servidor
+        async function cargarTareas() {
+            try {
+                const res = await fetch('/api/tasks');
+                const tareas = await res.json();
+                lista.innerHTML = tareas.map(t => "<div class='tarea-item'>📌 " + (t.nombre || t.n || t) + "</div>").join('') || 'No hay tareas.';
+            } catch (e) {
+                lista.innerHTML = "Error al conectar con la PC.";
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre-tarea').value;
+            await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre })
+            });
+            document.getElementById('nombre-tarea').value = '';
+            cargarTareas();
+        });
+
+        btnLimpiar.addEventListener('click', async () => {
+            if(confirm("Quieres ¿borrar todo?")) {
+                await fetch('/api/tasks', { method: 'DELETE' });
+                cargarTareas();
+                
+            }
+        });
+
+        cargarTareas();
+    </script>
+   <form>
+   <h2> formulario</h2>
+     <div class="form_input">
+     <input type="text" placeholder="ingresa tu nombre">
+     </div>
+    
+     <div class="form_input">
+     <input type="pasword" placeholder="ingresa tu contraseña">
+     </div>
+   </form>
+</body>
+</html>
