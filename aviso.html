@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Técnico - Factura Digital</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f3; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-qr { background: #333; color: white; }
+        .btn-wa { background: #25d366; color: white; }
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; border: 10px solid #fff; min-height: 180px; }
+        .footer-text { font-size: 12px; color: #777; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Registro de Reparación</h2>
+    <input type="text" id="cliente" placeholder="Nombre del Cliente">
+    <input type="text" id="telefono" placeholder="WhatsApp (ej: 573...)">
+    <input type="text" id="modelo" placeholder="Modelo del Celular">
+    <input type="text" id="reparacion" placeholder="Tipo de daño">
+    <input type="text" id="precio" placeholder="Precio de reparación">
+    
+    <button class="btn-qr" onclick="generarFactura()">1. GENERAR QR / FACTURA</button>
+    <div id="qrcode"></div>
+
+    <button class="btn-wa" onclick="enviarAviso()">2. ENVIAR FACTURA POR WHATSAPP</button>
+    <p class="footer-text">El cliente podrá ver su factura desde el link o el QR.</p>
+</div>
+
+<script>
+    let urlFacturaFinal = "";
+
+    function generarFactura() {
+        const cliente = document.getElementById('cliente').value;
+        const modelo = document.getElementById('modelo').value;
+        const reparacion = document.getElementById('reparacion').value;
+        const precio = document.getElementById('precio').value;
+        const qrContainer = document.getElementById('qrcode');
+        
+        qrContainer.innerHTML = "";
+
+        if(!modelo || !precio || !cliente) {
+            alert("Por favor llena Nombre, Modelo y Precio");
+            return;
+        }
+
+        const urlBase = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
+        const params = `?cliente=${encodeURIComponent(cliente)}&modelo=${encodeURIComponent(modelo)}&dano=${encodeURIComponent(reparacion)}&precio=${encodeURIComponent(precio)}`;
+        
+        urlFacturaFinal = urlBase + "factura.html" + params;
+
+        new QRCode(qrContainer, {
+            text: urlFacturaFinal,
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        alert("¡Factura lista! Ya puedes enviarla.");
+    }
+
+    function enviarAviso() {
+        const tel = document.getElementById('telefono').value;
+        const mod = document.getElementById('modelo').value;
+        const prc = document.getElementById('precio').value;
+
+        if(!tel || !urlFacturaFinal) {
+            alert("Primero genera el QR para crear el link de la factura");
+            return;
+        }
+
+        const msg = `¡Hola! Te informamos que tu ${mod} ya está listo.\n\n✅ Detalle: Reparación finalizada.\n💰 Total: $${prc}\n\n📄 Puedes ver tu factura aquí: ${urlFacturaFinal}`;
+        
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+</script>
+
+</body>
+</html>
