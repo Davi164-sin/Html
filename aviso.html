@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte Pro - Licencia Anual</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 450px; margin: auto; background: #1e1e1e; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
+        
+        .nav { display: flex; background: #000; padding: 10px 0; }
+        .nav button { flex: 1; padding: 10px; border: none; color: #666; background: none; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .nav button.active { color: #466eea; border-bottom: 2px solid #466eea; }
+
+        .content { padding: 20px; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #333; background: #2d2d2d; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-main { background: #466eea; color: white; }
+        .btn-main:hover { background: #3556c1; }
+
+        /* Bloqueo Total */
+        #bloqueo-pantalla {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+
+        .licencia-info { background: #2d2d2d; padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #466eea; }
+    </style>
+</head>
+<body>
+
+    <div id="bloqueo-pantalla">
+        <h1 style="color: #ff4444; font-size: 40px;">🔒</h1>
+        <h2 style="color: white;">SISTEMA BLOQUEADO</h2>
+        <p style="color: #aaa;">Su licencia anual ha expirado.</p>
+        <p style="color: #aaa; margin-bottom: 30px;">Comuníquese con el administrador para renovar el servicio por un año más.</p>
+        <input type="text" id="key-input" placeholder="Código de Activación Anual" style="text-align: center;">
+        <button class="btn btn-main" onclick="activarAnual()">RENOVAR LICENCIA</button>
+    </div>
+
+    <div class="container" id="app-content">
+        <div class="nav">
+            <button class="active" onclick="showTab('reg', event)">REGISTRO</button>
+            <button onclick="showTab('rep', event)">CONTABILIDAD</button>
+            <button onclick="showTab('lic', event)">LICENCIA</button>
+        </div>
+
+        <div class="content">
+            <div id="reg" class="section active">
+                <h3 style="margin-top:0;">Nueva Reparación</h3>
+                <input type="text" id="c" placeholder="Nombre Cliente">
+                <input type="text" id="m" placeholder="Modelo Dispositivo">
+                <input type="number" id="p" placeholder="Precio de Venta $">
+                <button class="btn btn-main" onclick="registrarVenta()">GUARDAR Y GENERAR QR</button>
+                <div id="qrcode" style="margin-top: 20px; display: flex; justify-content: center; padding: 10px; background: white; border-radius: 10px; width: fit-content; margin-inline: auto;"></div>
+            </div>
+
+            <div id="rep" class="section">
+                <h3>Ventas Realizadas</h3>
+                <div class="licencia-info">
+                    <p style="margin:0; font-size: 14px; color: #aaa;">TOTAL ESTE MES</p>
+                    <p id="total-mes" style="font-size: 24px; font-weight: bold; margin: 5px 0;">$ 0</p>
+                </div>
+                <div class="licencia-info" style="border-left-color: #25d366;">
+                    <p style="margin:0; font-size: 14px; color: #aaa;">TOTAL ESTE AÑO</p>
+                    <p id="total-año" style="font-size: 24px; font-weight: bold; margin: 5px 0;">$ 0</p>
+                </div>
+            </div>
+
+            <div id="lic" class="section">
+                <h3>Estado de Suscripción</h3>
+                <div class="licencia-info" id="status-box">
+                    <p id="dias-restantes" style="font-size: 18px; font-weight: bold;">Calculando...</p>
+                    <p id="fecha-fin" style="font-size: 13px; color: #888;"></p>
+                </div>
+                <p style="font-size: 11px; margin-top: 20px; color: #555;">ID UNICO: <span id="uuid"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE SEGURIDAD
+        const KEY_ANUAL = "VENTAS-2026-PRO"; // Este es el código que le vendes cada año
+
+        function verificarSeguridad() {
+            const vencimiento = localStorage.getItem('app_vencimiento');
+            
+            // Si es la primera vez, le damos 3 días de prueba o lo bloqueamos de inmediato
+            if (!vencimiento) {
+                const prueba = new Date();
+                prueba.setDate(prueba.getDate() + 3); 
+                localStorage.setItem('app_vencimiento', prueba.toISOString());
+            }
+
+            const hoy = new Date();
+            const fin = new Date(localStorage.getItem('app_vencimiento'));
+            const diffTime = fin - hoy;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (hoy > fin) {
+                document.getElementById('bloqueo-pantalla').style.display = 'flex';
+            } else {
+                document.getElementById('dias-restantes').innerText = `Le quedan ${diffDays} días de servicio`;
+                document.getElementById('fecha-fin').innerText = `Vence el: ${fin.toLocaleDateString()}`;
+            }
+            document.getElementById('uuid').innerText = Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        function activarAnual() {
+            const input = document.getElementById('key-input').value;
+            if (input === KEY_ANUAL) {
+                const nuevaFecha = new Date();
+                nuevaFecha.setFullYear(nuevaFecha.getFullYear() + 1); // SUMA 1 AÑO EXACTO
+                localStorage.setItem('app_vencimiento', nuevaFecha.toISOString());
+                alert("¡LICENCIA ACTIVADA! Gracias por su pago. Tiene 365 días de servicio.");
+                location.reload();
+            } else {
+                alert("CÓDIGO INVÁLIDO. Solicite su código anual al desarrollador.");
+            }
+        }
+
+        // LÓGICA DE VENTAS
+        function registrarVenta() {
+            const cliente = document.getElementById('c').value;
+            const modelo = document.getElementById('m').value;
+            const precio = parseFloat(document.getElementById('p').value);
+            
+            if (!cliente || !modelo || !precio) return alert("Complete los datos");
+
+            const venta = { p: precio, f: new Date().toISOString() };
+            let historial = JSON.parse(localStorage.getItem('db_ventas')) || [];
+            historial.push(venta);
+            localStorage.setItem('db_ventas', JSON.stringify(historial));
+
+            // QR apuntando a tu factura.html
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), {
+                text: `https://tu-vercel.app/factura.html?cliente=${cliente}&precio=${precio}`,
+                width: 150,
+                height: 150
+            });
+            alert("Venta guardada exitosamente.");
+        }
+
+        function showTab(tab, e) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            e.target.classList.add('active');
+            if(tab === 'rep') calcularVentas();
+        }
+
+        function calcularVentas() {
+            const historial = JSON.parse(localStorage.getItem('db_ventas')) || [];
+            const ahora = new Date();
+            let mes = 0, año = 0;
+            historial.forEach(v => {
+                const f = new Date(v.f);
+                if(f.getFullYear() === ahora.getFullYear()) {
+                    año += v.p;
+                    if(f.getMonth() === ahora.getMonth()) mes += v.p;
+                }
+            });
+            document.getElementById('total-mes').innerText = `$ ${mes.toLocaleString()}`;
+            document.getElementById('total-año').innerText = `$ ${año.toLocaleString()}`;
+        }
+
+        window.onload = verificarSeguridad;
+    </script>
+</body>
+</html>
