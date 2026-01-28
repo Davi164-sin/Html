@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Soporte Tech Elite - Full</title>
+  <style>
+    :root { --blue: #2979ff; --green: #39ff14; --red: #ff4444; --dark: #0a0e14; --card: #161b22; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--dark); color: #e6edf3; padding-bottom: 30px; }
+    header { background: #111; padding: 20px; text-align: center; border-bottom: 3px solid var(--blue); }
+    h1 { margin: 0; font-size: 20px; color: var(--blue); }
+    section { padding: 15px; max-width: 500px; margin: auto; }
+    .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; }
+    label { font-size: 11px; color: #8b949e; text-transform: uppercase; }
+    input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
+    .btn-add { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-box { background: #111; padding: 12px; border-radius: 10px; border-top: 4px solid var(--blue); }
+    .trabajo-item { background: var(--card); padding: 15px; border-radius: 12px; border-left: 5px solid var(--green); margin-bottom: 10px; }
+    .btn-ws { background: #25d366; color: black; border: none; padding: 8px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 10px; width: 100%; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <header><h1>TECH SUPPORT PRO</h1></header>
+
+  <main>
+    <section>
+      <div class="stats-grid">
+        <div class="stat-box"><small>Mes</small><div id="m-val">$ 0</div></div>
+        <div class="stat-box" style="border-top-color: var(--green);"><small>Año</small><div id="a-val">$ 0</div></div>
+      </div>
+
+      <div class="card">
+        <label>Celular del Cliente:</label>
+        <input type="number" id="tel" placeholder="300...">
+        <label>Nombre Cliente:</label>
+        <input type="text" id="cli" placeholder="Nombre">
+        <label>Modelo / Equipo:</label>
+        <input type="text" id="mod" placeholder="Ej: iPhone 11">
+        
+        <label>Repuesto del Stock:</label>
+        <select id="sel-prod" onchange="autoPrecio()">
+            <option value="">-- Solo Mano de Obra --</option>
+        </select>
+
+        <label>Cobro Final $:</label>
+        <input type="number" id="pre" placeholder="0.00">
+        
+        <button class="btn-add" onclick="procesarVenta()">GUARDAR E INFORMAR</button>
+      </div>
+
+      <h3 style="font-size: 14px; color: var(--blue);">SERVICIOS ACTIVOS</h3>
+      <div id="lista-historial"></div>
+    </section>
+  </main>
+
+<script>
+    function actualizarTodo() {
+        const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        const h = new Date(); let m=0, a=0;
+
+        // Cargar Selector de Stock
+        const sel = document.getElementById('sel-prod');
+        sel.innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + 
+            stock.map(i => `<option value="${i.id}" data-p="${i.pre}">${i.nom} (${i.can} und)</option>`).join('');
+
+        // Cuentas
+        ventas.forEach(x => {
+            let f = new Date(x.f);
+            if(f.getFullYear() === h.getFullYear()) { 
+                a += parseFloat(x.pre); 
+                if(f.getMonth() === h.getMonth()) m += parseFloat(x.pre); 
+            }
+        });
+        document.getElementById('m-val').innerText = "$ " + m.toLocaleString();
+        document.getElementById('a-val').innerText = "$ " + a.toLocaleString();
+
+        // Lista con Seguimiento
+        document.getElementById('lista-historial').innerHTML = ventas.slice().reverse().map(x => {
+            // URL DE SEGUIMIENTO (Ajustada a tu ruta cliente.html)
+            const linkSeguimiento = `https://${window.location.host}/usurio.html?id=${x.id}`;
+            const msj = encodeURIComponent(`*TECH SUPPORT*\n\nHola ${x.cli}, recibimos tu *${x.mod}*.\n*Total:* $${parseFloat(x.pre).toLocaleString()}\n\nPuedes ver el estado de tu equipo aquí:\n${linkSeguimiento}`);
+            
+            return `
+            <div class="trabajo-item">
+                <span style="float:right; color:var(--green); font-weight:bold;">$${parseFloat(x.pre).toLocaleString()}</span>
+                <b>${x.mod}</b><br>
+                <small>Cliente: ${x.cli}</small><br>
+                <a href="https://wa.me/57${x.tel}?text=${msj}" target="_blank" class="btn-ws">📦 ENVIAR LINK DE SEGUIMIENTO</a>
+            </div>`;
+        }).join('');
+    }
+
+    function autoPrecio() {
+        const sel = document.getElementById('sel-prod');
+        const p = sel.options[sel.selectedIndex].dataset.p;
+        if(p) document.getElementById('pre').value = p;
+    }
+
+    function procesarVenta() {
+        const tel = document.getElementById('tel').value, cli = document.getElementById('cli').value, 
+              mod = document.getElementById('mod').value, pre = document.getElementById('pre').value,
+              idProd = document.getElementById('sel-prod').value;
+
+        if(!tel || !cli || !pre) return alert("Faltan datos clave");
+
+        // Descontar Stock
+        if(idProd) {
+            let s = JSON.parse(localStorage.getItem('STOCK_DB'));
+            s = s.map(i => { if(i.id == idProd && i.can > 0) i.can -= 1; return i; });
+            localStorage.setItem('STOCK_DB', JSON.stringify(s));
+        }
+
+        // Guardar Venta
+        let v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        v.push({ id: Date.now(), tel, cli, mod, pre, f: new Date().toISOString(), estado: "RECIBIDO" });
+        localStorage.setItem('VENTAS_DB', JSON.stringify(v));
+
+        document.getElementById('tel').value = ""; document.getElementById('cli').value = "";
+        document.getElementById('mod').value = ""; document.getElementById('pre').value = "";
+        
+        actualizarTodo();
+        alert("¡Guardado! Ahora envía el link al cliente.");
+    }
+
+    window.onload = actualizarTodo;
+</script>
+</body>
+</html>
