@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte Pro - Inventario Inteligente</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 480px; margin: auto; background: #1e1e1e; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
+        .nav { display: flex; background: #000; padding: 10px 0; }
+        .nav button { flex: 1; padding: 10px; border: none; color: #666; background: none; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .nav button.active { color: #466eea; border-bottom: 2px solid #466eea; }
+        .content { padding: 20px; text-align: center; }
+        .section { display: none; }
+        .section.active { display: block; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #2d2d2d; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-blue { background: #466eea; color: white; }
+        .btn-green { background: #25d366; color: white; }
+        .btn-red { background: #ff4444; color: white; margin-top: 20px; font-size: 11px; }
+        #bloqueo-pantalla { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        .card { background: #2d2d2d; padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid #466eea; text-align: left; }
+        .inv-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 10px; margin-bottom: 5px; border-radius: 8px; }
+        #qrcode { margin: 20px auto; background: white; padding: 10px; border-radius: 10px; display: none; width: fit-content; }
+    </style>
+</head>
+<body>
+
+    <div id="bloqueo-pantalla">
+        <h1 style="color: #ff4444;">🔒 SISTEMA BLOQUEADO</h1>
+        <p>Licencia expirada. Ingrese código de renovación.</p>
+        <input type="text" id="key-bloqueo" placeholder="Código Anual" style="text-align: center; width: 80%;">
+        <button class="btn btn-blue" onclick="activarLicencia()" style="width: 80%;">ACTIVAR AHORA</button>
+    </div>
+
+    <div class="container">
+        <div class="nav">
+            <button class="active" onclick="tab('reg', event)">REGISTRO</button>
+            <button onclick="tab('inv', event)">INVENTARIO</button>
+            <button onclick="tab('rep', event)">VENTAS</button>
+            <button onclick="tab('lic', event)">LICENCIA</button>
+        </div>
+
+        <div class="content">
+            <div id="reg" class="section active">
+                <h3>Nueva Reparación</h3>
+                <input type="text" id="cliente" placeholder="Cliente">
+                <input type="text" id="tel" placeholder="WhatsApp">
+                <input type="text" id="mod" placeholder="Modelo">
+                
+                <p style="text-align: left; font-size: 12px; margin: 10px 0 0 5px; color: #888;">Repuesto utilizado (Opcional):</p>
+                <select id="select-repuesto">
+                    <option value="">-- Sin repuesto de inventario --</option>
+                </select>
+
+                <input type="number" id="pre" placeholder="Precio Final de Venta $">
+                <button class="btn btn-blue" onclick="guardarReparacion()">GUARDAR Y GENERAR QR</button>
+                <div id="qrcode"></div>
+                <button class="btn btn-green" id="btn-wa" style="display:none;" onclick="enviarWA()">ENVIAR WHATSAPP</button>
+            </div>
+
+            <div id="inv" class="section">
+                <h3>Inventario de Productos</h3>
+                <div style="background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <input type="text" id="inv-nombre" placeholder="Nombre del Producto">
+                    <input type="number" id="inv-cant" placeholder="Cantidad">
+                    <button class="btn btn-blue" onclick="agregarProducto()">AÑADIR A LISTA</button>
+                </div>
+                <div id="lista-inventario"></div>
+            </div>
+
+            <div id="rep" class="section">
+                <h3>Ventas</h3>
+                <div class="card"><p id="t-mes">Mensual: $0</p></div>
+                <div class="card" style="border-left-color: #25d366;"><p id="t-año">Anual: $0</p></div>
+            </div>
+
+            <div id="lic" class="section">
+                <h3>Suscripción</h3>
+                <div class="card">
+                    <p id="venc-info">---</p>
+                    <p id="dias-info">---</p>
+                </div>
+                <button class="btn btn-red" onclick="simularVencimiento()">🧪 PROBAR BLOQUEO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLAVE_MAESTRA = "VENTAS-2026-PRO";
+        let linkFactura = "";
+
+        // --- SEGURIDAD ---
+        function verificarLicencia() {
+            let venc = localStorage.getItem('venc_app');
+            if (!venc) {
+                let d = new Date(); d.setDate(d.getDate() + 2);
+                localStorage.setItem('venc_app', d.toISOString());
+            }
+            let hoy = new Date();
+            let fin = new Date(localStorage.getItem('venc_app'));
+            if (hoy > fin) document.getElementById('bloqueo-pantalla').style.display = 'flex';
+            else {
+                document.getElementById('venc-info').innerText = "Vence: " + fin.toLocaleDateString();
+                document.getElementById('dias-info').innerText = "Días restantes: " + Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        function activarLicencia() {
+            if (document.getElementById('key-bloqueo').value === CLAVE_MAESTRA) {
+                let d = new Date(); d.setFullYear(d.getFullYear() + 1);
+                localStorage.setItem('venc_app', d.toISOString());
+                location.reload();
+            } else alert("Código incorrecto");
+        }
+
+        function simularVencimiento() {
+            let a = new Date(); a.setDate(a.getDate() - 1);
+            localStorage.setItem('venc_app', a.toISOString());
+            location.reload();
+        }
+
+        // --- INVENTARIO ---
+        function agregarProducto() {
+            const nombre = document.getElementById('inv-nombre').value;
+            const cant = parseInt(document.getElementById('inv-cant').value) || 0;
+            if(!nombre) return alert("Nombre obligatorio");
+            let inv = JSON.parse(localStorage.getItem('inv_db')) || [];
+            inv.push({ id: Date.now(), nombre, cant });
+            localStorage.setItem('inv_db', JSON.stringify(inv));
+            renderInventario();
+            actualizarSelector();
+            document.getElementById('inv-nombre').value = "";
+            document.getElementById('inv-cant').value = "";
+        }
+
+        function renderInventario() {
+            const lista = document.getElementById('lista-inventario');
+            const inv = JSON.parse(localStorage.getItem('inv_db')) || [];
+            lista.innerHTML = inv.map(i => `
+                <div class="inv-item">
+                    <span>${i.nombre} (Stock: <b>${i.cant}</b>)</span>
+                    <button style="background:none; border:none; color:red; cursor:pointer" onclick="eliminarP(${i.id})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function actualizarSelector() {
+            const select = document.getElementById('select-repuesto');
+            const inv = JSON.parse(localStorage.getItem('inv_db')) || [];
+            select.innerHTML = '<option value="">-- Sin repuesto de inventario --</option>' + 
+                inv.map(i => `<option value="${i.id}">${i.nombre} (Disponibles: ${i.cant})</option>`).join('');
+        }
+
+        function eliminarP(id) {
+            let inv = JSON.parse(localStorage.getItem('inv_db')).filter(i => i.id !== id);
+            localStorage.setItem('inv_db', JSON.stringify(inv));
+            renderInventario(); actualizarSelector();
+        }
+
+        // --- REPARACIONES ---
+        function guardarReparacion() {
+            const pre = parseFloat(document.getElementById('pre').value) || 0;
+            const mod = document.getElementById('mod').value;
+            const cli = document.getElementById('cliente').value;
+            const repId = document.getElementById('select-repuesto').value;
+
+            if(!cli || !mod) return alert("Faltan datos");
+
+            // Descuento automático de inventario
+            if (repId) {
+                let inv = JSON.parse(localStorage.getItem('inv_db'));
+                inv = inv.map(item => {
+                    if(item.id == repId && item.cant > 0) item.cant -= 1;
+                    return item;
+                });
+                localStorage.setItem('inv_db', JSON.stringify(inv));
+            }
+
+            // Guardar Venta
+            let db = JSON.parse(localStorage.getItem('v_db')) || [];
+            db.push({ p: pre, f: new Date().toISOString() });
+            localStorage.setItem('v_db', JSON.stringify(db));
+
+            const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
+            linkFactura = `${base}factura.html?cliente=${encodeURIComponent(cli)}&modelo=${encodeURIComponent(mod)}&precio=${pre}`;
+
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = ""; qrDiv.style.display = "block";
+            new QRCode(qrDiv, { text: linkFactura, width: 120, height: 120 });
+            document.getElementById('btn-wa').style.display = "block";
+            alert("Venta registrada e inventario actualizado.");
+        }
+
+        function enviarWA() {
+            window.open(`https://wa.me/${document.getElementById('tel').value}?text=${encodeURIComponent("Listo: " + linkFactura)}`, '_blank');
+        }
+
+        function tab(id, e) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            e.target.classList.add('active');
+            if(id === 'rep') {
+                const db = JSON.parse(localStorage.getItem('v_db')) || [];
+                const h = new Date(); let m = 0, a = 0;
+                db.forEach(v => {
+                    const f = new Date(v.f);
+                    if(f.getFullYear() === h.getFullYear()) { a += v.p; if(f.getMonth() === h.getMonth()) m += v.p; }
+                });
+                document.getElementById('t-mes').innerText = `Mensual: $ ${m.toLocaleString()}`;
+                document.getElementById('t-año').innerText = `Anual: $ ${a.toLocaleString()}`;
+            }
+            if(id === 'inv') renderInventario();
+            if(id === 'reg') actualizarSelector();
+        }
+
+        window.onload = () => { verificarLicencia(); renderInventario(); actualizarSelector(); };
+    </script>
+</body>
+</html>
