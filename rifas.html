@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Talonario de Rifas (100 números) – Compartir por WhatsApp</title>
+  <style>
+    :root{
+      --accent:#0f766e; /* teal-700 */
+      --accent-2:#115e59; /* teal-800 */
+      --ink:#0a0a0a;
+      --muted:#5b5b5b;
+      --bg:#ffffff;
+      --border:#d4d4d8; /* zinc-300 */
+    }
+    *{box-sizing:border-box}
+    html,body{background:var(--bg);color:var(--ink);font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";}
+    .container{max-width:1100px;margin-inline:auto;padding:16px}
+
+    /* Panel de controles */
+    .controls{position:sticky;top:0;z-index:10;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px;display:grid;gap:8px;grid-template-columns:repeat(6,minmax(120px,1fr));align-items:end;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+    .controls h1{grid-column:1/-1;margin:0 0 2px;font-size:20px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:12px;color:var(--muted)}
+    .field input,.field select{appearance:none;border:1px solid var(--border);padding:10px 12px;border-radius:10px;font-size:14px}
+    .actions{display:flex;gap:8px}
+    .btn{cursor:pointer;border:none;border-radius:10px;padding:10px 14px;font-weight:600}
+    .btn-primary{background:var(--accent);color:white}
+    .btn-outline{background:white;border:1px solid var(--border);}
+
+    /* Grid de boletas */
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+
+    /* Boleta */
+    .ticket{border:1px dashed var(--accent-2);border-radius:16px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:8px;position:relative;background:linear-gradient(180deg,rgba(240,253,250,.45),transparent)}
+    .ticket::after{content:"";position:absolute;inset:8px;border-radius:10px;border:1px solid var(--border);pointer-events:none}
+    .badge{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+    .badge .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:#fff;font-weight:800}
+    .badge .title{font-size:14px;font-weight:700;letter-spacing:.2px}
+    .prize{grid-column:1/-1;font-size:16px;font-weight:800;color:var(--accent-2)}
+    .meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .meta div{font-size:12px;color:var(--muted)}
+    .number{justify-self:end;align-self:start;font-size:26px;font-weight:900;color:var(--accent-2)}
+    .copy{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .copy .box{border:1px dashed var(--border);border-radius:10px;padding:8px}
+    .box label{display:block;font-size:11px;color:var(--muted)}
+    .box .line{min-height:24px;border-bottom:1px dashed var(--border)}
+    .footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+    .footer small{color:var(--muted)}
+    .share{display:flex;gap:6px}
+    .share button{border:none;border-radius:8px;padding:8px 10px;cursor:pointer}
+    .share .wa{background:#25D366;color:#063; font-weight:700}
+    .share .copylink{background:#f4f4f5}
+
+    @media (max-width:900px){
+      .controls{grid-template-columns:repeat(2,minmax(120px,1fr))}
+      .grid{grid-template-columns:1fr}
+    }
+
+    /* Estilos para impresión */
+    @media print{
+      .controls{display:none}
+      body{background:white}
+      .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+      .ticket{break-inside:avoid-page;-webkit-region-break-inside:avoid;page-break-inside:avoid}
+      @page{size:A4;margin:12mm}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls" role="region" aria-label="Controles de talonario">
+      <h1>Generador de Talonario de Rifas (1–100)</h1>
+      <div class="field">
+        <label for="premio">Premio</label>
+        <input id="premio" value="Pareja de pollos finos" />
+      </div>
+      <div class="field">
+        <label for="sorteo">Sorteo</label>
+        <input id="sorteo" value="Chontico Noche" />
+      </div>
+      <div class="field">
+        <label for="fecha">Fecha del juego</label>
+        <input id="fecha" value="19 de octubre" />
+      </div>
+      <div class="field">
+        <label for="precio">Precio por boleta</label>
+        <input id="precio" value="$5.000" />
+      </div>
+      <div class="field">
+        <label for="vendedor">Vendedor/Organiza</label>
+        <input id="vendedor" placeholder="Nombre o contacto" />
+      </div>
+      <div class="field">
+        <label for="desde">Desde</label>
+        <input id="desde" type="number" min="1" value="1" />
+      </div>
+      <div class="field">
+        <label for="hasta">Hasta</label>
+        <input id="hasta" type="number" max="1000" value="100" />
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnGenerar">Generar</button>
+        <button class="btn btn-outline" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+
+    <div id="grid" class="grid" aria-live="polite"></div>
+  </div>
+
+  <template id="ticketTpl">
+    <article class="ticket" data-num="">
+      <div class="badge">
+        <div class="logo">RF</div>
+        <div>
+          <div class="title">Rifa oficial</div>
+          <div class="title" style="font-weight:400;color:var(--muted)">Número: <span class="numText"></span></div>
+        </div>
+      </div>
+
+      <div class="prize"></div>
+      <div class="number"></div>
+
+      <div class="meta">
+        <div>Juega el <span class="fecha"></span> – <span class="sorteo"></span></div>
+        <div>Precio: <strong class="precio"></strong></div>
+      </div>
+
+      <div class="copy">
+        <div class="box">
+          <label>Nombre del comprador</label>
+          <div class="line"></div>
+        </div>
+        <div class="box">
+          <label>Teléfono</label>
+          <div class="line"></div>
+        </div>
+        <div class="box">
+          <label>Vendedor/Organiza</label>
+          <div class="line vendedor"></div>
+        </div>
+        <div class="box">
+          <label>Condiciones</label>
+          <div style="font-size:10px;color:var(--muted);line-height:1.2;margin-top:4px">
+            Gana la boleta cuyo número coincida con el resultado del <span class="sorteo"></span> del <span class="fecha"></span>. 
+            En caso de premio desierto, aplica regla del siguiente sorteo o acuerdo del organizador.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <small>Conserve este comprobante. Sin tachones ni enmendaduras.</small>
+        <div class="share">
+          <button class="wa" title="Compartir por WhatsApp">Compartir</button>
+          <button class="copylink" title="Copiar texto">Copiar</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    const $ = (sel, el=document) => el.querySelector(sel);
+
+    function pad(num){ return String(num).padStart(3,'0'); }
+
+    function buildMsg({num, premio, fecha, sorteo, precio, vendedor}){
+      const texto = `🎟️ *RIFA*\nNúmero: *${pad(num)}*\nPremio: *${premio}*\nSorteo: *${sorteo}*\nFecha: *${fecha}*\nPrecio: *${precio}*${vendedor?`\nVendedor: *${vendedor}*`:''}\n\n¿Te interesa esta boleta?`;
+      return `https://wa.me/?text=${encodeURIComponent(texto)}`;
+    }
+
+    function copyMsg({num, premio, fecha, sorteo, precio, vendedor}){
+      const texto = `RIFA – Nº ${pad(num)}\nPremio: ${premio}\nSorteo: ${sorteo}\nFecha: ${fecha}\nPrecio: ${precio}${vendedor?`\nVendedor: ${vendedor}`:''}`;
+      navigator.clipboard.writeText(texto).then(()=>{
+        alert('Texto copiado. ¡Pégalo en WhatsApp o donde prefieras!');
+      });
+    }
+
+    function makeTicket(num, data){
+      const tpl = document.getElementById('ticketTpl');
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      node.dataset.num = num;
+      $('.numText', node).textContent = pad(num);
+      $('.number', node).textContent = '#' + pad(num);
+      $('.prize', node).textContent = data.premio;
+      $('.fecha', node).textContent = data.fecha;
+      $('.sorteo', node).textContent = data.sorteo;
+      $('.precio', node).textContent = data.precio;
+      if(data.vendedor){ $('.vendedor', node).textContent = data.vendedor; }
+
+      $('.wa', node).addEventListener('click', ()=>{
+        window.open(buildMsg({num, ...data}), '_blank');
+      });
+      $('.copylink', node).addEventListener('click', ()=>{
+        copyMsg({num, ...data});
+      });
+      return node;
+    }
+
+    function generar(){
+      const premio = document.getElementById('premio').value.trim() || 'Premio';
+      const sorteo = document.getElementById('sorteo').value.trim() || 'Sorteo';
+      const fecha  = document.getElementById('fecha').value.trim()  || 'Fecha';
+      const precio = document.getElementById('precio').value.trim() || '$0';
+      const vendedor = document.getElementById('vendedor').value.trim();
+      const desde = Math.max(1, parseInt(document.getElementById('desde').value||'1',10));
+      const hasta = Math.max(desde, parseInt(document.getElementById('hasta').value||'100',10));
+
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      for(let n = desde; n <= hasta; n++){
+        grid.appendChild(makeTicket(n, {premio, sorteo, fecha, precio, vendedor}));
+      }
+    }
+
+    document.getElementById('btnGenerar').addEventListener('click', generar);
+
+    // Valores por defecto del enunciado
+    window.addEventListener('DOMContentLoaded', ()=>{
+      generar();
+    });
+  </script>
+</body>
+</html>
