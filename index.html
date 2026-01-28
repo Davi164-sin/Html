@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>TaskFlow Pro - Exhibición de Apps</title>
+    <style>
+        :root { 
+            --neon-green: #39ff14; 
+            --electric-blue: #2979ff; 
+            --dark-bg: #0a0e14;
+            --card-bg: #161b22;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            color: #e6edf3;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* Cabecera */
+        h1 { text-align: center; color: var(--electric-blue); letter-spacing: 1px; margin-bottom: 5px; }
+        .subtitle { text-align: center; font-size: 11px; color: #8b949e; margin-bottom: 25px; text-transform: uppercase; }
+
+        /* Navegación Estilo Pastilla */
+        nav {
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 50px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 8px; 
+            justify-content: center;
+            border: 1px solid #30363d;
+        }
+        nav a {
+            color: #f0f6fc; 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 12px;
+            background: #21262d;
+            padding: 8px 16px;
+            border-radius: 40px; 
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background: var(--electric-blue); transform: scale(1.05); }
+
+        /* Buscador de Apps */
+        .search-container { margin-bottom: 20px; }
+        #buscador {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            background: var(--card-bg);
+            color: white;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        #buscador:focus { border-color: var(--neon-green); outline: none; box-shadow: 0 0 8px rgba(57, 255, 20, 0.2); }
+
+        /* Formulario de Entrada */
+        #task-form { display: flex; gap: 10px; margin-bottom: 25px; }
+        #nombre-tarea {
+            flex: 1; padding: 12px; border-radius: 10px;
+            border: 1px solid #30363d; background: #0d1117; color: white;
+        }
+        .btn-add {
+            background: var(--electric-blue); color: white; border: none;
+            padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer;
+        }
+
+        /* Galería de Aplicaciones */
+        #lista-tareas {
+            display: grid; gap: 12px;
+        }
+        .tarea-item {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s;
+            animation: slideIn 0.4s ease forwards;
+        }
+        .tarea-item:hover { transform: translateX(5px); border-color: var(--neon-green); }
+        .app-icon { 
+            background: rgba(57, 255, 20, 0.1); 
+            color: var(--neon-green);
+            padding: 8px; border-radius: 8px; margin-right: 15px; font-size: 18px;
+        }
+        .app-name { font-weight: 600; font-size: 15px; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Botón de Limpieza */
+        .btn-limpiar {
+            background-color: rgba(229, 76, 74, 0.1); color: #f85149;
+            width: 100%; padding: 12px; border: 1px solid #f85149;
+            border-radius: 10px; margin-top: 30px; cursor: pointer; font-weight: bold;
+        }
+        .btn-limpiar:hover { background: #f85149; color: white; }
+
+        /* Login Box original corregida */
+        .login-box {
+            margin-top: 50px; padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px; border: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>TaskFlow <span style="color: var(--neon-green);">Elite</span></h1>
+    <div class="subtitle">Software & Mobile Development Lab</div>
+
+    <nav>
+        <a href="code-box.html">CÓDIGO</a>
+        <a href="cliente.html" style="background: var(--electric-blue);">CLIENTES</a>
+        <a href="aviso.html">AVISOS</a>
+    </nav>
+
+    <div class="search-container">
+        <input type="text" id="buscador" placeholder="🔍 Buscar aplicación en el portafolio..." onkeyup="filtrarApps()">
+    </div>
+
+    <form id="task-form">
+        <input type="text" id="nombre-tarea" placeholder="Nombre de la nueva aplicación..." required>
+        <button type="submit" class="btn-add">AÑADIR</button>
+    </form>
+
+    <div id="lista-tareas">Sincronizando base de datos...</div>
+    
+    <button id="btn-limpiar" class="btn-limpiar">BORRAR TODA LA BASE DE DATOS</button>
+
+    <div class="login-box">
+        <h2 style="margin-top:0; font-size: 16px; color: var(--electric-blue);">Acceso Restringido</h2>
+        <input type="text" placeholder="Usuario" style="width:100%; padding:10px; margin-bottom:10px; background:#0d1117; border:1px solid #30363d; color:white; border-radius:8px;">
+        <input type="password" placeholder="Password" style="width:100%; padding:10px; background:#0d1117; border:1px solid #30363d; color:white; border-radius:8px;">
+    </div>
+
+    <script>
+        const lista = document.getElementById('lista-tareas');
+        const form = document.getElementById('task-form');
+        let cacheApps = []; 
+
+        async function cargarTareas() {
+            try {
+                const res = await fetch('/api/tasks');
+                const tareas = await res.json();
+                cacheApps = tareas;
+                localStorage.setItem('regs', JSON.stringify(tareas));
+                renderizar(tareas);
+            } catch (e) {
+                cacheApps = JSON.parse(localStorage.getItem('regs')) || [];
+                renderizar(cacheApps);
+            }
+        }
+
+        function renderizar(datos) {
+            lista.innerHTML = datos.map(t => `
+                <div class='tarea-item'>
+                    <div class="app-icon">⚡</div>
+                    <div class="app-name">${t.nombre || t.n || t}</div>
+                </div>
+            `).join('') || '<p style="text-align:center; color:#8b949e;">No hay aplicaciones registradas.</p>';
+        }
+
+        function filtrarApps() {
+            const term = document.getElementById('buscador').value.toLowerCase();
+            const filtradas = cacheApps.filter(t => {
+                const txt = (t.nombre || t.n || t).toLowerCase();
+                return txt.includes(term);
+            });
+            renderizar(filtradas);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('nombre-tarea');
+            try {
+                await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre: input.value })
+                });
+                input.value = '';
+                cargarTareas();
+            } catch (err) { console.log("Error al sincronizar"); }
+        });
+
+        document.getElementById('btn-limpiar').addEventListener('click', async () => {
+            if(confirm("¿Seguro que quieres vaciar la vitrina?")) {
+                await fetch('/api/tasks', { method: 'DELETE' });
+                localStorage.removeItem('regs');
+                cargarTareas();
+            }
+        });
+
+        // Actualización inteligente (solo si no se está buscando)
+        setInterval(() => {
+            if(document.getElementById('buscador').value === "") cargarTareas();
+        }, 3000);
+
+        cargarTareas();
+    </script>
+</body>
+</html>
