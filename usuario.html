@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de mi Equipo - Soporte Tech</title>
+    <style>
+        :root { --blue: #2979ff; --green: #39ff14; --dark: #0a0e14; --card: #161b22; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        .container { width: 90%; max-width: 400px; background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        
+        .logo { font-size: 24px; font-weight: bold; color: var(--blue); margin-bottom: 20px; }
+        .status-box { background: rgba(57, 255, 20, 0.1); border: 1px solid var(--green); color: var(--green); padding: 15px; border-radius: 12px; font-weight: bold; margin: 20px 0; font-size: 18px; }
+        
+        .details { text-align: left; background: #0d1117; padding: 20px; border-radius: 12px; border: 1px solid #222; }
+        .details p { margin: 10px 0; font-size: 14px; color: #8b949e; }
+        .details b { color: white; display: block; font-size: 16px; margin-top: 4px; }
+        
+        .footer { margin-top: 25px; font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-call { display: block; margin-top: 20px; padding: 12px; background: var(--blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="contenido">
+        <div class="logo">SOPORTE TECH ELITE</div>
+        <p style="color: #8b949e;">Cargando información del servicio...</p>
+    </div>
+
+<script>
+    function cargarEstado() {
+        // 1. Obtener el ID que viene en el enlace (?id=12345)
+        const params = new URLSearchParams(window.location.search);
+        const idServicio = params.get('id');
+        
+        // 2. Buscar en la base de datos (VENTAS_DB)
+        const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        const equipo = ventas.find(x => x.id == idServicio);
+
+        const contenedor = document.getElementById('contenido');
+
+        if (equipo) {
+            contenedor.innerHTML = `
+                <div class="logo">SOPORTE TECH ELITE</div>
+                <div class="status-box">📦 ESTADO: RECIBIDO</div>
+                
+                <div class="details">
+                    <p>DUEÑO DEL EQUIPO: <b>${equipo.cli}</b></p>
+                    <p>EQUIPO EN SERVICIO: <b>${equipo.mod}</b></p>
+                    <p>VALOR DEL TRABAJO: <b>$${parseFloat(equipo.pre).toLocaleString()}</b></p>
+                    <p>FECHA DE INGRESO: <b>${new Date(equipo.f).toLocaleDateString()}</b></p>
+                </div>
+
+                <a href="tel:3000000000" class="btn-call">📞 LLAMAR AL TÉCNICO</a>
+                <div class="footer">Gracias por confiar en nosotros</div>
+            `;
+        } else {
+            contenedor.innerHTML = `
+                <div class="logo">SOPORTE TECH ELITE</div>
+                <h3 style="color: #ff4444;">ORDEN NO ENCONTRADA</h3>
+                <p>El código de servicio no es válido o fue eliminado del sistema.</p>
+                <a href="/" class="btn-call" style="background:#333">VOLVER</a>
+            `;
+        }
+    }
+
+    window.onload = cargarEstado;
+</script>
+</body>
+</html>
