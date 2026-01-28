@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte Pro - Business Intelligence</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --blue: #466eea; --green: #25d366; --red: #ff4444; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: var(--card); border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
+        
+        .nav { display: flex; background: #000; overflow-x: auto; }
+        .nav button { flex: 1; padding: 15px; border: none; color: #666; background: none; cursor: pointer; font-weight: bold; font-size: 10px; text-transform: uppercase; min-width: 100px; }
+        .nav button.active { color: var(--blue); border-bottom: 2px solid var(--blue); }
+
+        .content { padding: 20px; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #2d2d2d; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-green { background: var(--green); color: white; }
+        
+        .card { background: #2d2d2d; padding: 15px; border-radius: 12px; margin-top: 10px; border-left: 4px solid var(--blue); }
+        .inv-item { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 10px; margin-bottom: 8px; border-radius: 10px; border: 1px solid #333; }
+        .low-stock { border: 1px solid var(--red); background: rgba(255, 68, 68, 0.1); }
+        .badge { padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        
+        table { width: 100%; font-size: 12px; margin-top: 10px; border-collapse: collapse; }
+        th { text-align: left; color: #888; padding: 8px; }
+        td { padding: 8px; border-bottom: 1px solid #333; }
+
+        #bloqueo-pantalla { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="bloqueo-pantalla">
+        <h1 style="color: var(--red); font-size: 50px;">🔒</h1>
+        <h2>LICENCIA VENCIDA</h2>
+        <p>Contacte al administrador para renovar su acceso anual.</p>
+        <input type="text" id="key-bloqueo" placeholder="Código de Activación" style="text-align: center; width: 80%;">
+        <button class="btn btn-blue" onclick="activar()" style="width: 80%;">RENOVAR AHORA</button>
+    </div>
+
+    <div class="container">
+        <div class="nav">
+            <button class="active" onclick="tab('reg', event)">Venta</button>
+            <button onclick="tab('inv', event)">Stock</button>
+            <button onclick="tab('caja', event)">Caja</button>
+            <button onclick="tab('lic', event)">App</button>
+        </div>
+
+        <div class="content">
+            <div id="reg" class="section active">
+                <input type="text" id="cliente" placeholder="Nombre Cliente">
+                <input type="text" id="tel" placeholder="WhatsApp">
+                <select id="sel-prod" onchange="setPrice()">
+                    <option value="">-- Servicio/Mano de Obra --</option>
+                </select>
+                <input type="number" id="pre" placeholder="Total a Cobrar $">
+                <button class="btn btn-blue" onclick="vender()">REGISTRAR VENTA</button>
+                <div id="qrcode" style="margin: 15px auto; background: white; padding: 8px; display: none; width: fit-content;"></div>
+                <button id="btn-wa" class="btn btn-green" style="display:none;" onclick="enviarWA()">ENVIAR RECIBO WA</button>
+            </div>
+
+            <div id="inv" class="section">
+                <h3>Nuevo Ingreso</h3>
+                <input type="text" id="i-nom" placeholder="Producto/Repuesto">
+                <input type="number" id="i-can" placeholder="Cantidad">
+                <input type="number" id="i-pre" placeholder="Precio Sugerido">
+                <button class="btn btn-blue" onclick="addStock()">AÑADIR AL INVENTARIO</button>
+                <h4 style="margin-top:20px;">Lista de Existencias</h4>
+                <div id="list-stock"></div>
+            </div>
+
+            <div id="caja" class="section">
+                <div class="card"><small>MES ACTUAL</small><h2 id="m-val">$ 0</h2></div>
+                <div class="card" style="border-left-color: var(--green);"><small>AÑO ACTUAL</small><h2 id="a-val">$ 0</h2></div>
+                <h4>Últimos Movimientos</h4>
+                <table>
+                    <thead><tr><th>Fecha</th><th>Cliente</th><th>Valor</th></tr></thead>
+                    <tbody id="historial"></tbody>
+                </table>
+            </div>
+
+            <div id="lic" class="section">
+                <div class="card">
+                    <p id="info-v">---</p>
+                    <button class="btn" style="background:#444; color:white; font-size:10px" onclick="vencerYa()">🧪 PROBAR BLOQUEO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const KEY = "VENTAS-2026-PRO";
+        let linkQR = "";
+
+        // LICENCIA
+        function check() {
+            let v = localStorage.getItem('EXP');
+            if(!v) { let d = new Date(); d.setDate(d.getDate()+2); localStorage.setItem('EXP', d.toISOString()); }
+            let hoy = new Date(); let fin = new Date(localStorage.getItem('EXP'));
+            if(hoy > fin) document.getElementById('bloqueo-pantalla').style.display='flex';
+            else document.getElementById('info-v').innerText = "Licencia hasta: " + fin.toLocaleDateString();
+        }
+        function activar() {
+            if(document.getElementById('key-bloqueo').value === KEY) {
+                let d = new Date(); d.setFullYear(d.getFullYear()+1);
+                localStorage.setItem('EXP', d.toISOString()); location.reload();
+            } else alert("Error");
+        }
+        function vencerYa() {
+            let d = new Date(); d.setDate(d.getDate()-1);
+            localStorage.setItem('EXP', d.toISOString()); location.reload();
+        }
+
+        // STOCK
+        function addStock() {
+            const n=document.getElementById('i-nom').value, c=parseInt(document.getElementById('i-can').value), p=parseFloat(document.getElementById('i-pre').value);
+            if(!n || !c) return;
+            let db = JSON.parse(localStorage.getItem('S_DB')) || [];
+            db.push({id: Date.now(), n, c, p});
+            localStorage.setItem('S_DB', JSON.stringify(db));
+            document.getElementById('i-nom').value=''; document.getElementById('i-can').value='';
+            refresh();
+        }
+
+        function refresh() {
+            const list = document.getElementById('list-stock');
+            const sel = document.getElementById('sel-prod');
+            const db = JSON.parse(localStorage.getItem('S_DB')) || [];
+            
+            list.innerHTML = db.map(i => `
+                <div class="inv-item ${i.c < 5 ? 'low-stock' : ''}">
+                    <span>${i.n} ${i.c < 5 ? '<br><b style="color:var(--red); font-size:10px;">¡STOCK BAJO!</b>' : ''}</span>
+                    <span class="badge" style="background:${i.c < 5 ? 'var(--red)' : 'var(--blue)'}">${i.c} und</span>
+                </div>
+            `).join('');
+
+            sel.innerHTML = '<option value="">-- Servicio/Mano de Obra --</option>' + 
+                db.map(i => `<option value="${i.id}" data-p="${i.p}">${i.n} (${i.c})</option>`).join('');
+        }
+
+        function setPrice() {
+            const s = document.getElementById('sel-prod');
+            const p = s.options[s.selectedIndex].dataset.p;
+            if(p) document.getElementById('pre').value = p;
+        }
+
+        // VENTAS
+        function vender() {
+            const cli = document.getElementById('cliente').value, pre = parseFloat(document.getElementById('pre').value), id = document.getElementById('sel-prod').value;
+            if(!cli || !pre) return alert("Faltan datos");
+
+            if(id) {
+                let db = JSON.parse(localStorage.getItem('S_DB'));
+                db = db.map(i => { if(i.id == id && i.c > 0) i.c--; return i; });
+                localStorage.setItem('S_DB', JSON.stringify(db));
+            }
+
+            let v = JSON.parse(localStorage.getItem('V_DB')) || [];
+            v.push({cli, pre, f: new Date().toISOString()});
+            localStorage.setItem('V_DB', JSON.stringify(v));
+
+            const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
+            linkQR = `${base}factura.html?c=${encodeURIComponent(cli)}&p=${pre}`;
+            const qr = document.getElementById('qrcode');
+            qr.innerHTML = ""; qr.style.display="block";
+            new QRCode(qr, {text: linkQR, width: 120, height: 120});
+            document.getElementById('btn-wa').style.display="block";
+            refresh();
+        }
+
+        function enviarWA() {
+            const t = document.getElementById('tel').value;
+            window.open(`https://wa.me/${t}?text=${encodeURIComponent("Recibo: "+linkQR)}`);
+        }
+
+        function tab(id, e) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            e.target.classList.add('active');
+            if(id === 'caja') loadCaja();
+        }
+
+        function loadCaja() {
+            const v = JSON.parse(localStorage.getItem('V_DB')) || [];
+            const h = new Date(); let m=0, a=0;
+            v.forEach(x => {
+                let f = new Date(x.f);
+                if(f.getFullYear() === h.getFullYear()) { a+=x.pre; if(f.getMonth() === h.getMonth()) m+=x.pre; }
+            });
+            document.getElementById('m-val').innerText = "$ " + m.toLocaleString();
+            document.getElementById('a-val').innerText = "$ " + a.toLocaleString();
+            
+            const hist = document.getElementById('historial');
+            hist.innerHTML = v.slice(-5).reverse().map(x => `
+                <tr><td>${new Date(x.f).toLocaleDateString()}</td><td>${x.cli}</td><td>$${x.pre}</td></tr>
+            `).join('');
+        }
+
+        window.onload = () => { check(); refresh(); };
+    </script>
+</body>
+</html>
