@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Tech Support Elite - Oficial</title>
+  <style>
+    :root { --blue: #2979ff; --green: #39ff14; --dark: #0a0e14; --card: #161b22; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--dark); color: white; }
+    
+    /* BLOQUEO DE COBRO ANUAL */
+    #lock-screen {
+      position: fixed; top:0; left:0; width:100%; height:100%; background:#000;
+      z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center;
+    }
+
+    header { background: #111; padding: 20px; text-align: center; border-bottom: 2px solid var(--blue); }
+    .nav { display: flex; background: #111; }
+    .nav-btn { flex: 1; padding: 15px; background: transparent; color: #8b949e; border: none; cursor: pointer; font-weight: bold; }
+    .nav-active { color: var(--blue); border-bottom: 2px solid var(--blue); }
+
+    section { padding: 15px; max-width: 500px; margin: auto; }
+    .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; }
+    
+    label { font-size: 11px; color: #8b949e; text-transform: uppercase; display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+    .btn-add { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    
+    .item { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; border-left: 5px solid var(--blue); }
+  </style>
+</head>
+<body>
+
+  <div id="lock-screen">
+    <div style="background:#111; padding:30px; border-radius:20px; border:1px solid red; text-align:center;">
+      <h2 style="color:red;">LICENCIA VENCIDA</h2>
+      <p>Contacte al administrador para renovar.</p>
+      <input type="password" id="key-input" placeholder="Clave">
+      <button class="btn-add" style="background:white; color:black" onclick="activar()">ACTIVAR</button>
+    </div>
+  </div>
+
+  <header><h1>TECH SUPPORT ELITE</h1></header>
+  
+  <div class="nav">
+    <button class="nav-btn nav-active" onclick="tab('v', this)">VENTAS</button>
+    <button class="nav-btn" onclick="tab('s', this)">STOCK</button>
+  </div>
+
+  <main>
+    <section id="sec-v">
+      <div class="card">
+        <label>WhatsApp Dueño:</label>
+        <input type="number" id="v-tel" placeholder="300...">
+        <label>Nombre Dueño:</label>
+        <input type="text" id="v-cli" placeholder="Nombre">
+        <label>Equipo / Daño:</label>
+        <input type="text" id="v-mod" placeholder="Ej: Pantalla Samsung A32">
+        <label>Repuesto Stock:</label>
+        <select id="v-sel" onchange="autoP()"></select>
+        <label>Precio Cobrado:</label>
+        <input type="number" id="v-pre" placeholder="0">
+        <button class="btn-add" onclick="venta()">GUARDAR Y ENVIAR ENLACE</button>
+      </div>
+      <div id="historial"></div>
+    </section>
+
+    <section id="sec-s" style="display:none">
+      <div class="card">
+        <input type="text" id="s-nom" placeholder="Repuesto">
+        <input type="number" id="s-pre" placeholder="Precio">
+        <input type="number" id="s-can" placeholder="Cantidad">
+        <button class="btn-add" style="background:var(--green); color:black" onclick="stock()">+ AGREGAR AL INVENTARIO</button>
+      </div>
+      <div id="lista-s"></div>
+    </section>
+  </main>
+
+<script>
+    const CLAVE_MAESTRA = "ADMIN2026";
+
+    function revisarLicencia() {
+        let vence = localStorage.getItem('LIC_VENCE');
+        if(!vence) {
+            let f = new Date(); f.setFullYear(f.getFullYear() + 1);
+            localStorage.setItem('LIC_VENCE', f.getTime());
+            vence = f.getTime();
+        }
+        if(new Date().getTime() > vence) document.getElementById('lock-screen').style.display = 'flex';
+    }
+
+    function activar() {
+        if(document.getElementById('key-input').value === CLAVE_MAESTRA) {
+            let n = new Date(); n.setFullYear(n.getFullYear() + 1);
+            localStorage.setItem('LIC_VENCE', n.getTime());
+            location.reload();
+        } else { alert("Clave Incorrecta"); }
+    }
+
+    function tab(id, b) {
+        document.getElementById('sec-v').style.display = id === 'v' ? 'block' : 'none';
+        document.getElementById('sec-s').style.display = id === 's' ? 'block' : 'none';
+        document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('nav-active'));
+        b.classList.add('nav-active');
+    }
+
+    function stock() {
+        const nom = document.getElementById('s-nom').value, pre = document.getElementById('s-pre').value, can = document.getElementById('s-can').value;
+        if(!nom || !pre || !can) return;
+        let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        db.push({ id: Date.now(), nom, pre, can: parseInt(can) });
+        localStorage.setItem('STOCK_DB', JSON.stringify(db));
+        actualizar();
+        document.getElementById('s-nom').value = ""; document.getElementById('s-pre').value = ""; document.getElementById('s-can').value = "";
+    }
+
+    function venta() {
+        const tel = document.getElementById('v-tel').value, cli = document.getElementById('v-cli').value, 
+              mod = document.getElementById('v-mod').value, pre = document.getElementById('v-pre').value,
+              idS = document.getElementById('v-sel').value;
+
+        if(!tel || !cli || !pre) return alert("Faltan datos");
+
+        if(idS) {
+            let s = JSON.parse(localStorage.getItem('STOCK_DB'));
+            s = s.map(i => { if(i.id == idS && i.can > 0) i.can--; return i; });
+            localStorage.setItem('STOCK_DB', JSON.stringify(s));
+        }
+
+        let v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        const n = { id: Date.now(), cli, mod, pre, f: new Date().toISOString() };
+        v.push(n);
+        localStorage.setItem('VENTAS_DB', JSON.stringify(v));
+
+        // GENERAR ENLACE PARA EL DUEÑO DEL CELULAR
+        const rutaCliente = window.location.origin + '/cliente.html?id=' + n.id;
+        const mensaje = encodeURIComponent(`*RECIBO TECH SUPPORT*\n\nHola ${cli}, recibimos tu *${mod}*.\n*Total:* $${parseFloat(pre).toLocaleString()}\n\nConsulta el estado de tu equipo aquí:\n${rutaCliente}`);
+        
+        window.open(`https://wa.me/57${tel}?text=${mensaje}`, '_blank');
+        
+        actualizar();
+        document.getElementById('v-tel').value=""; document.getElementById('v-cli').value=""; 
+        document.getElementById('v-mod').value=""; document.getElementById('v-pre').value="";
+    }
+
+    function autoP() {
+        const sel = document.getElementById('v-sel');
+        const p = sel.options[sel.selectedIndex].dataset.p;
+        if(p) document.getElementById('v-pre').value = p;
+    }
+
+    function actualizar() {
+        const s = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        const v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+
+        document.getElementById('v-sel').innerHTML = '<option value="">-- Mano de Obra --</option>' + 
+            s.map(i => `<option value="${i.id}" data-p="${i.pre}">${i.nom} (${i.can})</option>`).join('');
+
+        document.getElementById('lista-s').innerHTML = s.map(i => `
+            <div class="item"><span>${i.nom}</span><b>$${i.pre} (${i.can})</b></div>
+        `).join('');
+
+        document.getElementById('historial').innerHTML = v.slice().reverse().map(x => `
+            <div class="item" style="border-color:var(--green)">
+                <span>${x.mod} - ${x.cli}</span><b>$${x.pre}</b>
+            </div>
+        `).join('');
+    }
+
+    window.onload = () => { revisarLicencia(); actualizar(); };
+</script>
+</body>
+</html>
