@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Soporte Tech Pro - Sistema Completo</title>
+  <style>
+    :root { --blue: #2979ff; --green: #39ff14; --red: #ff4444; --dark: #0a0e14; --card: #161b22; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--dark); color: #e6edf3; padding-bottom: 50px; }
+    header { background: #111; padding: 15px; text-align: center; border-bottom: 3px solid var(--blue); }
+    h1 { margin: 0; font-size: 20px; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
+    
+    section { padding: 15px; max-width: 500px; margin: auto; }
+    .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #30363d; }
+    
+    label { font-size: 11px; color: #8b949e; text-transform: uppercase; display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #30363d; background: #0d1117; color: white; box-sizing: border-box; }
+    
+    .btn-add { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .btn-stock { background: var(--green); color: black; }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-box { background: #111; padding: 12px; border-radius: 10px; border-top: 4px solid var(--blue); }
+    .stat-box small { font-size: 10px; color: #8b949e; text-transform: uppercase; }
+
+    .item-lista { background: var(--card); padding: 15px; border-radius: 12px; border-left: 5px solid var(--green); margin-bottom: 10px; }
+    .badge { float: right; color: var(--green); font-weight: bold; font-size: 16px; }
+    
+    .tab-bar { display: flex; background: #111; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #30363d; }
+    .tab-btn { padding: 15px; background: transparent; color: #8b949e; border: none; flex: 1; cursor: pointer; font-weight: bold; font-size: 12px; }
+    .tab-active { color: var(--blue); border-bottom: 2px solid var(--blue); background: rgba(41, 121, 255, 0.05); }
+    
+    .btn-ws { background: #25d366; color: black; border: none; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: none; display: block; text-align: center; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <header><h1>TECH SUPPORT ELITE</h1></header>
+
+  <div class="tab-bar">
+    <button class="tab-btn tab-active" onclick="showTab('tab-ventas', this)">SERVICIOS / VENTAS</button>
+    <button class="tab-btn" onclick="showTab('tab-stock', this)">INVENTARIO / STOCK</button>
+  </div>
+
+  <main>
+    <section id="tab-ventas">
+      <div class="stats-grid">
+        <div class="stat-box"><small>Ingresos Mes</small><div id="m-val">$ 0</div></div>
+        <div class="stat-box" style="border-top-color: var(--green);"><small>Ingresos Año</small><div id="a-val">$ 0</div></div>
+      </div>
+
+      <div class="card">
+        <h3>Nuevo Servicio</h3>
+        <label>Número Cliente:</label>
+        <input type="number" id="v-tel" placeholder="Ej: 3001234567">
+        <label>Nombre Cliente:</label>
+        <input type="text" id="v-cli" placeholder="Nombre completo">
+        <label>Equipo y Falla:</label>
+        <input type="text" id="v-mod" placeholder="Ej: Huawei Y9 - Pin de carga">
+        
+        <label>Repuesto (Si aplica):</label>
+        <select id="v-sel-prod" onchange="autoPrecio()">
+          <option value="">-- Solo Mano de Obra --</option>
+        </select>
+        
+        <label>Precio Final $:</label>
+        <input type="number" id="v-pre" placeholder="0.00">
+        
+        <button class="btn-add" onclick="registrarVenta()">GUARDAR Y ENVIAR RECIBO</button>
+      </div>
+
+      <h3 style="color: var(--blue); font-size: 14px;">HISTORIAL DE SERVICIOS</h3>
+      <div id="historial-ventas"></div>
+    </section>
+
+    <section id="tab-stock" style="display:none;">
+      <div class="card">
+        <h3>Agregar Repuesto</h3>
+        <label>Nombre:</label>
+        <input type="text" id="s-nom" placeholder="Ej: Pantalla iPhone X">
+        <label>Precio de Venta:</label>
+        <input type="number" id="s-pre" placeholder="0.00">
+        <label>Cantidad en Stock:</label>
+        <input type="number" id="s-can" placeholder="1">
+        <button class="btn-add btn-stock" onclick="agregarInventario()">GUARDAR EN STOCK</button>
+      </div>
+
+      <h3 style="color:var(--green); font-size: 14px;">INVENTARIO ACTUAL</h3>
+      <div id="lista-stock"></div>
+    </section>
+  </main>
+
+<script>
+    // --- NAVEGACIÓN ---
+    function showTab(id, btn) {
+        document.getElementById('tab-ventas').style.display = 'none';
+        document.getElementById('tab-stock').style.display = 'none';
+        document.getElementById(id).style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+        btn.classList.add('tab-active');
+    }
+
+    // --- LÓGICA DE INVENTARIO ---
+    function agregarInventario() {
+        const nom = document.getElementById('s-nom').value, pre = document.getElementById('s-pre').value, can = document.getElementById('s-can').value;
+        if(!nom || !pre || !can) return alert("Completa todos los campos del repuesto");
+
+        let stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        stock.push({ id: Date.now(), nom, pre, can: parseInt(can) });
+        localStorage.setItem('STOCK_DB', JSON.stringify(stock));
+        
+        document.getElementById('s-nom').value = ""; document.getElementById('s-pre').value = ""; document.getElementById('s-can').value = "";
+        actualizarTodo();
+    }
+
+    // --- LÓGICA DE VENTAS ---
+    function registrarVenta() {
+        const tel = document.getElementById('v-tel').value, cli = document.getElementById('v-cli').value, 
+              mod = document.getElementById('v-mod').value, pre = document.getElementById('v-pre').value,
+              idProd = document.getElementById('v-sel-prod').value;
+
+        if(!tel || !cli || !pre) return alert("Faltan datos para el recibo");
+
+        // RESTA DE STOCK
+        if(idProd) {
+            let stock = JSON.parse(localStorage.getItem('STOCK_DB'));
+            stock = stock.map(i => {
+                if(i.id == idProd && i.can > 0) i.can -= 1;
+                return i;
+            });
+            localStorage.setItem('STOCK_DB', JSON.stringify(stock));
+        }
+
+        let ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        const nuevaVenta = { id: Date.now(), tel, cli, mod, pre, f: new Date().toISOString(), estado: "RECIBIDO" };
+        ventas.push(nuevaVenta);
+        localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
+
+        // GENERACIÓN DEL LINK PARA EL DUEÑO
+        const linkSeguimiento = window.location.origin + '/usurio.html?id=' + nuevaVenta.id;
+        const texto = encodeURIComponent(`*SOPORTE TECH ELITE*\n\nHola ${cli}, recibimos tu equipo:\n📱 *${mod}*\n💰 *Valor:* $${parseFloat(pre).toLocaleString()}\n\n✅ *Sigue el estado de tu reparación aquí:* \n${linkSeguimiento}`);
+        
+        window.open(`https://wa.me/57${tel}?text=${texto}`, '_blank');
+
+        actualizarTodo();
+        document.getElementById('v-tel').value = ""; document.getElementById('v-cli').value = "";
+        document.getElementById('v-mod').value = ""; document.getElementById('v-pre').value = "";
+    }
+
+    function autoPrecio() {
+        const sel = document.getElementById('v-sel-prod');
+        const p = sel.options[sel.selectedIndex].dataset.p;
+        if(p) document.getElementById('v-pre').value = p;
+    }
+
+    // --- CARGA DE DATOS ---
+    function actualizarTodo() {
+        const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        
+        // Cargar Selector de Stock
+        const sel = document.getElementById('v-sel-prod');
+        sel.innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + 
+            stock.map(i => `<option value="${i.id}" data-p="${i.pre}">${i.nom} (${i.can} und)</option>`).join('');
+
+        // Cargar Lista de Inventario
+        document.getElementById('lista-stock').innerHTML = stock.map(i => `
+            <div class="item-lista" style="border-color: var(--blue)">
+                <span style="font-weight:bold;">${i.nom}</span>
+                <span class="badge">$${parseFloat(i.pre).toLocaleString()} | ${i.can} UND</span>
+            </div>
+        `).join('');
+
+        // Historial de Ventas y Cuentas
+        const h = new Date(); let m=0, a=0;
+        document.getElementById('historial-ventas').innerHTML = ventas.slice().reverse().map(x => {
+            let f = new Date(x.f);
+            if(f.getFullYear() === h.getFullYear()) {
+                a += parseFloat(x.pre);
+                if(f.getMonth() === h.getMonth()) m += parseFloat(x.pre);
+            }
+            return `
+            <div class="item-lista">
+                <span class="badge">$${parseFloat(x.pre).toLocaleString()}</span>
+                <b>${x.mod}</b><br>
+                <small>Cliente: ${x.cli}</small>
+            </div>`;
+        }).join('');
+
+        document.getElementById('m-val').innerText = "$ " + m.toLocaleString();
+        document.getElementById('a-val').innerText = "$ " + a.toLocaleString();
+    }
+
+    window.onload = actualizarTodo;
+</script>
+</body>
+</html>
