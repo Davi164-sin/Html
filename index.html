@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Sincronización Total</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f3f4f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--darker);
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 13px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .header a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .sync-status {
+            font-size: 12px;
+            color: var(--success);
+            margin-top: 8px;
+        }
+
+        .sync-status.offline {
+            color: var(--danger);
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-clear {
+            background: var(--danger);
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-clear:hover {
+            background: #dc2626;
+        }
+
+        .task-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .task-item strong {
+            color: var(--dark);
+            font-size: 15px;
+        }
+
+        .device-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .count {
+            background: var(--darker);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: var(--primary);
+        }
+
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📋 TaskFlow</h1>
+            <a href="aviso.html">técnico</a>
+            <a href="cliente.html">cliente</a>
+            <a href="auto-lavado.html">planilla</a>
+            <p style="font-size: 13px; opacity: 0.8;">Sincronización en tiempo real</p>
+            <div class="sync-status" id="sync-status">
+                ● Conectado
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="taskInput"
+                    placeholder="Escribe tu tarea aquí..."
+                    autocomplete="off"
+                >
+                <button class="btn btn-add" onclick="addTask()">
+                    ➕ Agregar
+                </button>
+            </div>
+
+            <div class="count" id="count">
+                📊 Total de tareas: <strong>0</strong>
+            </div>
+
+            <div class="loading" id="loading">
+                Sincronizando...
+            </div>
+
+            <div class="task-list" id="taskList">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <p>No hay tareas aún</p>
+                    <p style="font-size: 12px; margin-top: 5px;">Agrega tu primera tarea arriba</p>
+                </div>
+            </div>
+
+            <button class="btn btn-clear" onclick="clearAll()">
+                🗑️ Borrar todas las tareas
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // URL de tu API en Vercel (ajusta esto a tu URL real)
+        const API_URL = '/api/tasks';
+
+        // Detectar si es celular o PC
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const deviceType = isMobile ? '📱' : '💻';
+
+        // Cargar tareas al iniciar
+        async function loadTasks() {
+            try {
+                document.getElementById('loading').classList.add('active');
+                const response = await fetch(API_URL);
+                const tasks = await response.json();
+                renderTasks(tasks);
+                updateSyncStatus(true);
+            } catch (error) {
+                console.error('Error al cargar:', error);
+                updateSyncStatus(false);
+                // Cargar desde localStorage como respaldo
+                loadFromLocal();
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        // Renderizar tareas
+        function renderTasks(tasks) {
+            const container = document.getElementById('taskList');
+
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>No hay tareas aún</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = tasks.map(task => `
+                    <div class="task-item">
+                        <div>
+                            <strong>${task.nombre}</strong>
+                            <span class="device-badge">${deviceType}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('count').innerHTML =
+                `📊 Total de tareas: <strong>${tasks.length}</strong>`;
+        }
+
+        // Agregar tarea
+        async function addTask() {
+            const input = document.getElementById('taskInput');
+            const taskName = input.value.trim();
+
+            if (!taskName) {
+                alert('Por favor escribe una tarea');
+                return;
+            }
+
+            try {
+                document.getElementById('loading').classList.add('active');
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre: taskName })
+                });
+
+                const tasks = await response.json();
+                renderTasks(tasks);
+                saveToLocal(tasks);
+                input.value = '';
+                input.focus();
+                updateSyncStatus(true);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al sincronizar. Guardado localmente.');
+                addToLocal(taskName);
+                updateSyncStatus(false);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        // Borrar todas las tareas
+        async function clearAll() {
+            if (!confirm('¿Borrar TODAS las tareas? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            try {
+                document.getElementById('loading').classList.add('active');
+                await fetch(API_URL, { method: 'DELETE' });
+                renderTasks([]);
+                localStorage.removeItem('tasks_backup');
+                updateSyncStatus(true);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al sincronizar');
+                updateSyncStatus(false);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        // Guardar en localStorage como respaldo
+        function saveToLocal(tasks) {
+            localStorage.setItem('tasks_backup', JSON.stringify(tasks));
+        }
+
+        function loadFromLocal() {
+            const tasks = JSON.parse(localStorage.getItem('tasks_backup') || '[]');
+            renderTasks(tasks);
+        }
+
+        function addToLocal(taskName) {
+            const tasks = JSON.parse(localStorage.getItem('tasks_backup') || '[]');
+            tasks.push({ nombre: taskName });
+            saveToLocal(tasks);
+            renderTasks(tasks);
+        }
+
+        // Actualizar estado de sincronización
+        function updateSyncStatus(online) {
+            const status = document.getElementById('sync-status');
+            if (online) {
+                status.textContent = '● Conectado';
+                status.classList.remove('offline');
+            } else {
+                status.textContent = '● Desconectado (modo local)';
+                status.classList.add('offline');
+            }
+        }
+
+        // Enter para agregar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('taskInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addTask();
+            });
+
+            // Cargar tareas iniciales
+            loadTasks();
+
+            // Auto-sincronizar cada 5 segundos
+            setInterval(loadTasks, 5000);
+        });
+    </script>
+</body>
+</html>

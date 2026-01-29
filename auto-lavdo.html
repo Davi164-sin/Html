@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Lavado Pro - Inteligente</title>
+  <style>
+    :root { --blue: #245caa; --red: #fa0008; --dark: #1a1a1a; }
+    body { font-family: 'Segoe UI', Arial; margin: 0; background-color: var(--blue); color: white; }
+    header { background: #1a4473; padding: 15px; text-align: center; border-bottom: 3px solid var(--red); }
+    
+    section { padding: 15px; }
+    .card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+    
+    input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+    .btn-add { width: 100%; padding: 15px; background: #2ecc71; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--red); font-size: 12px; }
+    th, td { border: 1px solid rgba(0,0,0,0.2); padding: 10px; text-align: center; }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .stat-box { background: var(--dark); padding: 15px; border-radius: 10px; border-top: 4px solid var(--red); }
+    .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
+    .stat-box div { font-size: 18px; font-weight: bold; margin-top: 5px; }
+
+    #lista-lavadores { margin-top: 10px; font-size: 13px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 style="margin:0;">Sistema Lavado Pro</h1>
+    <span id="fecha-actual" style="font-size: 12px; opacity: 0.8;"></span>
+  </header>
+
+  <main>
+    <section>
+      <div class="card">
+        <input type="text" id="marca" placeholder="Marca (Ej: Mazda)">
+        <input type="text" id="placa" placeholder="Placa">
+        <input type="text" id="lavador" placeholder="Nombre Lavador">
+        <input type="number" id="precio" placeholder="Precio de la lavada $">
+        <button class="btn-add" onclick="registrar()">REGISTRAR LAVADO</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Placa</th>
+              <th>Lavador</th>
+              <th>Total $</th>
+              <th>50/50</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-cuerpo"></tbody>
+        </table>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <small>Total Lavados</small>
+          <div id="count-lavados">0</div>
+        </div>
+        <div class="stat-box">
+          <small>Ingreso Bruto</small>
+          <div id="total-plata">$0</div>
+        </div>
+        <div class="stat-box">
+          <small>Para el Dueño</small>
+          <div id="ganancia-dueno" style="color: #00d4ff;">$0</div>
+        </div>
+        <div class="stat-box">
+          <small>Para Empleados</small>
+          <div id="ganancia-empleados" style="color: #39ff14;">$0</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <h3 style="margin-top:0; font-size: 14px;">💰 Pago por Lavador:</h3>
+        <div id="lista-lavadores">No hay registros hoy.</div>
+      </div>
+
+      <button onclick="cerrarCaja()" style="width:100%; background:black; color:white; border:none; padding:12px; border-radius:8px; margin-top:20px; font-weight:bold;">BORRAR TODO / NUEVA JORNADA</button>
+    </section>
+  </main>
+
+  <script>
+    let db = JSON.parse(localStorage.getItem('lavado_db')) || [];
+
+    function registrar() {
+      const marca = document.getElementById('marca').value;
+      const placa = document.getElementById('placa').value;
+      const lavador = document.getElementById('lavador').value.trim().toUpperCase();
+      const precio = parseFloat(document.getElementById('precio').value);
+
+      if(!marca || !placa || !lavador || isNaN(precio)) return alert("Completa los datos");
+
+      const item = { marca, placa, lavador, precio, fecha: new Date().toLocaleDateString() };
+      db.push(item);
+      localStorage.setItem('lavado_db', JSON.stringify(db));
+      
+      // Limpiar campos
+      document.getElementById('marca').value = "";
+      document.getElementById('placa').value = "";
+      document.getElementById('precio').value = "";
+      
+      actualizarCuentas();
+    }
+
+    function actualizarCuentas() {
+      const cuerpo = document.getElementById('tabla-cuerpo');
+      const listaL = document.getElementById('lista-lavadores');
+      cuerpo.innerHTML = "";
+      
+      let totalP = 0, lavadosN = 0;
+      let pagosLavadores = {}; // Objeto para llevar cuenta por nombre
+
+      db.forEach(i => {
+        totalP += i.precio;
+        lavadosN++;
+        
+        // Sumar cuenta individual por nombre
+        if(!pagosLavadores[i.lavador]) pagosLavadores[i.lavador] = 0;
+        pagosLavadores[i.lavador] += (i.precio / 2);
+
+        cuerpo.innerHTML += `
+          <tr>
+            <td>${i.placa}</td>
+            <td>${i.lavador}</td>
+            <td>$${i.precio}</td>
+            <td>$${i.precio / 2}</td>
+          </tr>`;
+      });
+
+      // Actualizar cuadritos de arriba
+      document.getElementById('count-lavados').innerText = lavadosN;
+      document.getElementById('total-plata').innerText = "$" + totalP.toLocaleString();
+      document.getElementById('ganancia-dueno').innerText = "$" + (totalP / 2).toLocaleString();
+      document.getElementById('ganancia-empleados').innerText = "$" + (totalP / 2).toLocaleString();
+
+      // Mostrar cuánto se le debe a cada uno
+      let htmlLavadores = "";
+      for(let nombre in pagosLavadores) {
+        htmlLavadores += `<div>👤 <b>${nombre}:</b> se le pagan $${pagosLavadores[nombre].toLocaleString()}</div>`;
+      }
+      listaL.innerHTML = htmlLavadores || "No hay registros hoy.";
+    }
+
+    function cerrarCaja() {
+      if(confirm("¿Seguro que quieres borrar la cuenta? Esto reinicia el día.")) {
+        db = [];
+        localStorage.removeItem('lavado_db');
+        actualizarCuentas();
+      }
+    }
+
+    // Poner fecha de hoy
+    document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Carga inicial
+    actualizarCuentas();
+  </script>
+</body>
+</html>
