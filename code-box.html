@@ -1,0 +1,368 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeBox Mobile</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: black;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      padding: 0;
+      margin: 0;
+    }
+
+    header {
+      width: 100%;
+      background: linear-gradient(235deg, #366eea 0%,  #764ba2 100%);
+      padding: 10px;
+      text-align: center;
+      margin: 0;
+     
+    }
+
+    #tabs {
+      width: 200px;
+      box-sizing: border-box;
+      margin: o;
+      font-size: 15;
+      display: flex;
+      background: #2d2d2d;
+      border-bottom: 2px solid #444;
+    }
+    .mi-tabs {
+     width: 200px;
+     border: 1px solid #ccc;
+     border-radius: 10px;
+     }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: #2d2d2d;
+      color: #888;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab.active {
+      color: #fff;
+      border-bottom-color: #4CAF50;
+    }
+
+    .editor-container {
+      height: 85vh;
+      position: relative;
+      overflow: hidden;
+      background-color: #0004;
+      color: #5678;
+    }
+
+    .editor {
+      display: none;
+      width: 100%;
+      height: 100%;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: none;
+      resize: none;
+      outline: none;
+    }
+
+    .editor.active {
+      display: block;
+    }
+
+    #keyboard {
+      height: 100vw;
+      height: 30vh;
+      background: transparent;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top 10px;
+      box-sizing: border-box;
+    }
+
+    .key {
+      width: 100%;
+      background: #3e3e3e;
+      color: #fff;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 200px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .key:active {
+      background-color: #4e4e4e;
+    }
+
+    #runButton {
+      background: #4CAF50;
+      grid-column: span 2;
+    }
+
+    #preview {
+      background: #fff;
+      height: 150px;
+      border-top: 2px solid #444;
+      overflow: auto;
+      margin-botton: 10px;
+    }
+
+    #preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    #console {
+      background: #0d0d0d;
+      color: #00ff00;
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      height: 100px;
+      overflow-y: auto;
+      border-top: 2px solid #444;
+    }
+    .keyboard-mi {
+     color: white;
+    }
+    .container-previw {
+     width: 100%;
+     background-color: black;
+     margin: 0;
+     border: 1px solid #ccc;
+     border-radius: 10px;
+     padding: 0;
+     box-sizing: border-box;
+
+    }
+    a {
+    color: #238a ;
+    margin-top: 4px;
+   }
+   .button {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #ccc;
+
+    }
+    details {
+    width: 100px;
+    margin-letf: 20px;
+    background-color: #ccc;
+    box-sizing: borde-box;
+    margin: 0;
+    padding: 5px;
+    font-sizen: 15px;
+    }
+    main {
+    width: 100%;
+    border: 1px solid black;
+    border-radius: 10px;
+    background-color: white;
+    margin: auto;
+    padding: 5px;
+    box-sizing: border-box;
+ 
+    }
+  </style>
+</head>
+<body>
+  <header>
+   <details><summary>ajustes</summary>
+    <ul>
+    <li>
+     <a href="subir.html">subir archivo</a>
+    </li>
+    <li>
+      <a href="archivos-subidos.html">ver archivo</a>
+    </li>
+    <li>
+      <a href="https://www.youtube.com/@DavidCale%C3%B1o-j3q">youtube</a>
+    </li>
+    <li>
+       <a href="index.html">volver</a></li>
+    </ul>
+    </details>
+    <h1> CodeBox Mobile</h1>
+    <p> la programacion en el alcanze de tus manos</p>
+
+  </header>
+  <main>
+   <div class="container-previw">
+   <div id="preview"></div>
+   </div>
+  <div class="mi-tabs">
+  <div id="tabs">
+    <button class="tab active" onclick="switchTab('html')">HTML</button>
+    <button class="tab" onclick="switchTab('css')">CSS</button>
+    <button class="tab" onclick="switchTab('js')">JS</button>
+    <button id="runButton" class="key" onclick="runCode()">▶ Ejecutar</button>
+  </div>
+  </div>
+
+
+  <div class="editor-container">
+    <textarea id="htmlEditor" class="editor active" placeholder="<!-- Escribe tu HTML aquí -->"></textarea>
+    <textarea id="cssEditor" class="editor" placeholder="/* Escribe tu CSS aquí */"></textarea>
+    <textarea id="jsEditor" class="editor" placeholder="// Escribe tu JavaScript aquí"></textarea>
+  </div>
+  <div class="button">
+  <div id="keyboard">
+    <button class="key" onclick="insertText('{')">{</button>
+    <button class="key" onclick="insertText('}')">}</button>
+    <button class="key" onclick="insertText('(')">(</button>
+    <button class="key" onclick="insertText(')')">)</button>
+    <button class="key" onclick="insertText('<')"><</button>
+    <button class="key" onclick="insertText('>')">></button>
+    <button class="key" onclick="insertText(';')">;</button>
+    <button class="key" onclick="insertText('=')">=</button>
+    <button class="key" onclick="clearAll()">🗑️</button>
+    <button class="key" onclick="saveCode()"> 💾</button> 
+  </div>
+  </div>
+  <div id="console"></div>
+  <script>
+    let currentTab = 'html';
+    const editors = {
+      html: document.getElementById('htmlEditor'),
+      css: document.getElementById('cssEditor'),
+      js: document.getElementById('jsEditor')
+    };
+
+    function switchTab(tab) {
+      currentTab = tab;
+
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelectorAll('.editor').forEach(e => e.classList.remove('active'));
+      editors[tab].classList.add('active');
+      editors[tab].focus();
+    }
+
+    function insertText(text) {
+      const editor = editors[currentTab];
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const before = editor.value.substring(0, start);
+      const after = editor.value.substring(end);
+
+      editor.value = before + text + after;
+      editor.selectionStart = editor.selectionEnd = start + text.length;
+      editor.focus();
+    }
+
+    function runCode() {
+      const consoleDiv = document.getElementById('console');
+      consoleDiv.innerHTML = '';
+
+      const html = editors.html.value;
+      const css = `<style>${editors.css.value}</style>`;
+
+      const jsWithConsole = `
+        <script>
+          const originalLog = console.log;
+          console.log = function(...args) {
+            window.parent.postMessage({
+              type: 'console',
+              message: args.join(' ')
+            }, '*');
+            originalLog.apply(console, args);
+          };
+
+          try {
+            ${editors.js.value}
+          } catch(error) {
+            window.parent.postMessage({
+              type: 'error',
+              message: error.message
+            }, '*');
+          }
+        <\/script>
+      `;
+
+      const code = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          ${css}
+        </head>
+        <body>
+          ${html}
+          ${jsWithConsole}
+        </body>
+        </html>
+      `;
+
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '<iframe></iframe>';
+      const iframe = preview.querySelector('iframe');
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(code);
+      iframe.contentDocument.close();
+    }
+
+    window.addEventListener('message', function(e) {
+      const consoleDiv = document.getElementById('console');
+      if (e.data.type === 'console') {
+        consoleDiv.innerHTML += `✅ ${e.data.message}\n`;
+      } else if (e.data.type === 'error') {
+        consoleDiv.innerHTML += `❌ Error: ${e.data.message}\n`;
+      }
+    });
+
+    function clearAll() {
+      if (confirm('¿Borrar todo el código?')) {
+        editors.html.value = '';
+        editors.css.value = '';
+        editors.js.value = '';
+        document.getElementById('preview').innerHTML = '';
+        document.getElementById('console').innerHTML = '';
+      }
+    }
+
+    function saveCode() {
+      localStorage.setItem('codebox-html', editors.html.value);
+      localStorage.setItem('codebox-css', editors.css.value);
+      localStorage.setItem('codebox-js', editors.js.value);
+      alert('💾 Código guardado');
+    }
+
+    window.onload = function() {
+      editors.html.value = localStorage.getItem('codebox-html') || '';
+      editors.css.value = localStorage.getItem('codebox-css') || '';
+      editors.js.value = localStorage.getItem('codebox-js') || '';
+    };
+  </script>
+ </main>
+</body>
+</html>
+	
