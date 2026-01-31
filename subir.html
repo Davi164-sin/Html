@@ -1,0 +1,119 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Administrador de Archivos</title>
+      <style>
+        body { font-family: Arial, sans-serif; }
+        #contenedor {
+          width: 80%; margin: 40px auto; padding: 20px;
+          border: 1px solid #ccc; border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #contenedor h1 { text-align: center; }
+        #contenedor form { margin-top: 20px; }
+        #contenedor input[type="text"] {
+          width: 50%; height: 30px; margin-bottom: 10px;
+          padding: 10px; border: 1px solid #ccc;
+        }
+        #contenedor input[type="submit"] {
+          width: 20%; height: 30px; background-color: #4CAF50;
+          color: #fff; padding: 10px; border: none;
+          border-radius: 5px; cursor: pointer;
+        }
+        #contenedor input[type="submit"]:hover {
+          background-color: #3e8e41;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="contenedor">
+        <h1>Administrador de Archivos</h1>
+        <img src="/uploads/FB_IMG_17563089733352253.jpg" width="250">
+
+        <h1>Subir archivo</h1>
+         <form action="/upload" method="post" enctype="multipart/>
+          <input type="file" name="archivo" required>
+         <button type="submit">Subir</button>
+       </form>
+        <form id="form-crear-archivo">
+          <input type="text" id="nombre-archivo" placeholder="Ingrese el nombre del archivo">
+          <input type="submit" value="Crear Archivo">
+        </form>
+
+        <form id="form-buscar-archivo">
+          <input type="text" id="nombre-archivo-buscar" placeholder="Ingrese el nombre del archivo a buscar">
+          <input type="submit" value="Buscar Archivo">
+        </form>
+
+        <form id="form-eliminar-archivo">
+          <input type="text" id="nombre-archivo-eliminar" placeholder="Ingrese el nombre del archivo a eliminar">
+          <input type="submit" value="Eliminar Archivo">
+        </form>
+        <form action="/upload" method="post" enctype="mult>
+        <input type="file" name="archivo" required>
+        <button type="submit">Subir</button>
+        </form>
+        <div id="resultado"></div>
+        </div>
+
+       
+      <script>
+        var formCrearArchivo = document.getElementById("form-crear-archivo");
+        var inputNombreArchivo = document.getElementById("nombre-archivo");
+        var formBuscarArchivo = document.getElementById("form-buscar-archivo");
+        var inputNombreArchivoBuscar = document.getElementById("nombre-archivo-buscar");
+        var formEliminarArchivo = document.getElementById("form-eliminar-archivo");
+        var inputNombreArchivoEliminar = document.getElementById("nombre-archivo-eliminar");
+        var resultado = document.getElementById("resultado");
+
+        formCrearArchivo.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var nombreArchivo = inputNombreArchivo.value;
+          crearArchivo(nombreArchivo);
+        });
+
+        formBuscarArchivo.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var nombreArchivoBuscar = inputNombreArchivoBuscar.value;
+          buscarArchivo(nombreArchivoBuscar);
+        });
+
+        formEliminarArchivo.addEventListener("submit", function(event) {
+          event.preventDefault();
+          var nombreArchivoEliminar = inputNombreArchivoEliminar.value;
+          eliminarArchivo(nombreArchivoEliminar);
+        });
+
+        function crearArchivo(nombreArchivo) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/crear-archivo", true);
+          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          xhr.send("nombre_archivo=" + nombreArchivo);
+          xhr.onload = function() {
+            resultado.innerHTML = xhr.responseText;
+          };
+        }
+
+        function buscarArchivo(nombreArchivoBuscar) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/buscar-archivo", true);
+          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          xhr.send("nombre_archivo_buscar=" + nombreArchivoBuscar);
+          xhr.onload = function() {
+            resultado.innerHTML = xhr.responseText;
+          };
+        }
+
+        function eliminarArchivo(nombreArchivoEliminar) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/eliminar-archivo", true);
+          xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+          xhr.send("nombre_archivo_eliminar=" + nombreArchivoEliminar);
+          xhr.onload = function() {
+            resultado.innerHTML = xhr.responseText;
+          };
+        }
+      </script>
+    </body>
+    </html>
+   
