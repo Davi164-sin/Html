@@ -1,0 +1,87 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Control Total</title>
+    <style>
+        :root { --primary: #6366f1; --success: #10b981; --danger: #ef4444; --dark: #111827; }
+        body { font-family: sans-serif; background: #f3f4f6; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 450px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--dark); color: white; padding: 20px; text-align: center; }
+        .status { font-size: 12px; margin-top: 10px; color: #10b981; }
+        .content { padding: 20px; }
+        .input-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-add { background: var(--primary); color: white; }
+        .task-item { background: #f9fafb; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; }
+        .price { color: var(--success); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h1>📋 TaskFlow</h1> 
+            <a href="aviso.html">tenico</a>
+            <a href="faturas.html">faturas</a>
+            <a href="code-box.html">code</a>
+            <div id="sync-status" class="status">● Conectando a Vercel...</div>
+        </div>
+        <div class="content">
+            <div class="input-box">
+                <input type="text" id="taskInput" placeholder="Nueva nota rápida...">
+                <button class="btn btn-add" onclick="addTask()">Añadir</button>
+            </div>
+            <div id="taskList"></div>
+            <button class="btn" style="width:100%; background:#fee2e2; color:#ef4444; margin-top:10px" onclick="clearAll()">Borrar Todo</button>
+        </div>
+    </div>
+
+    <script>
+       const MI_ID = 'cliete_juan_pro';
+       const API_URL = '/api/tareas?id=cliente_juan_pro';
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                const container = document.getElementById('taskList');
+                document.getElementById('sync-status').innerText = "● Sincronizado";
+                
+                container.innerHTML = data.reverse().map(item => `
+                    <div class="task-item">
+                        <div>
+                            <strong>${item.cli || item.nombre || 'Sin nombre'}</strong><br>
+                            <small>${item.mod || 'Nota manual'}</small>
+                        </div>
+                        <div class="price">${item.pre ? '$'+item.pre : ''}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('sync-status').innerText = "● Error de conexión";
+            }
+        }
+
+        async function addTask() {
+            const input = document.getElementById('taskInput');
+            if(!input.value) return;
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nombre: input.value })
+            });
+            input.value = '';
+            loadData();
+        }
+
+        async function clearAll() {
+            if(confirm('¿Borrar todo?')) {
+                await fetch(API_URL, { method: 'DELETE' });
+                loadData();
+            }
+        }
+
+        setInterval(loadData, 4000);
+        loadData();
+    </script>
+</body>
+</html>
