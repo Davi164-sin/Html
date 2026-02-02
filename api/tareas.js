@@ -3,7 +3,7 @@ let nube = {};
 export default function handler(req, res) {
     // 1. ESTO ES LO MÁS IMPORTANTE PARA EL ERROR DE LA FOTO:
     res.setHeader('Access-Control-Allow-Origin', '*'); // Permite cualquier origen
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIO
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     // Responder rápido a la verificación del navegador
