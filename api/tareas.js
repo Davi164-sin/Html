@@ -1,45 +1,37 @@
-// Memoria global (se limpia si Vercel reinicia el servidor)
 let nube = {}; 
 
 export default function handler(req, res) {
-    // Permisos para que cualquier página pueda conectarse
+    // Permisos para que cualquier app se conecte sin errores
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-
-    // El ID que identifica a cada cliente (ej: ?id=ana o ?id=pedro)
-    const { id } = req.query;
-
-    if (!id) {
-        return res.status(400).json({ error: "Falta el ID del proyecto" });
+    // Responder a la verificación de conexión
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
-    // Si el proyecto no existe en la nube, lo creamos vacío
+    const { id } = req.query;
+
+    // Si no hay ID, devolvemos lista vacía
+    if (!id) {
+        return res.status(200).json([]);
+    }
+
+    // Si el ID no existe en la nube, lo creamos vacío
     if (!nube[id]) {
         nube[id] = [];
     }
 
-    try {
-        if (req.method === 'GET') {
-            return res.status(200).json(nube[id]);
-        }
+    // MÉTODO GET: Leer los datos
+    if (req.method === 'GET') {
+        return res.status(200).json(nube[id]);
+    }
 
-        if (req.method === 'POST') {
-            // Guardamos lo que envíe el cliente en su cajón correspondiente
-            nube[id].push({
-                ...req.body,
-                fecha: new Date().toLocaleString()
-            });
-            return res.status(200).json(nube[id]);
-        }
-
-        if (req.method === 'DELETE') {
-            nube[id] = [];
-            return res.status(200).json([]);
-        }
-    } catch (e) {
-        return res.status(500).json({ error: "Error en el servidor" });
+    // MÉTODO POST: Guardar los datos
+    if (req.method === 'POST') {
+        nube[id] = req.body;
+        return res.status(200).json(nube[id]);
     }
 }
+
