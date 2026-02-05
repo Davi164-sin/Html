@@ -3,60 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow-App</title>
+    <title>TaskFlow</title>
     <style>
-        body { background: #000; color: #00ff00; font-family: monospace; padding: 20px; text-align: center; }
-        textarea { 
-            width: 100%; 
-            height: 70vh; 
-            background: #111; 
-            color: #00ff00; 
-            border: 1px solid #00ff00; 
-            padding: 15px; 
-            font-size: 1.2rem;
-            border-radius: 10px;
-            box-sizing: border-box;
-        }
-        h2 { letter-spacing: 5px; border-bottom: 2px solid #00ff00; display: inline-block; padding-bottom: 10px; }
-        #status { font-size: 10px; color: #555; margin-top: 10px; }
+        :root { --primary: #6366f1; --dark: #1e293b; }
+        body { font-family: sans-serif; background: #6366f1; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 400px; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .header { background: var(--dark); color: white; padding: 20px; text-align: center; }
+        .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; font-size: 12px; margin-top: 10px; opacity: 0.7; }
+        .content { padding: 20px; text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; }
+        .counter { background: var(--dark); color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; }
+        .task-list { list-style: none; padding: 0; margin: 0; text-align: left; }
+        .task-item { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+        .btn-clear { background: #ef4444; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; margin-top: 15px; cursor: pointer; }
+        #sync { font-size: 12px; color: #ef4444; margin-top: 10px; }
+        #sync.online { color: #22c55e; }
     </style>
 </head>
 <body>
 
-    <h2>TASKFLOW-APP</h2>
-    <br><br>
-    
-    <textarea id="editor" oninput="enviar()" placeholder="Escribiendo en la nube..."></textarea>
-    
-    <div id="status">Sincronizado</div>
+<div class="card">
+    <div class="header">
+        <h1>📋 TaskFlow</h1>
+        <div class="menu">
+            <span>técnico</span><span>cliente</span><span>planilla</span><span>rifas</span>
+            <span>facturas</span><span>cuadros</span><span>code</span>
+        </div>
+        <div id="sync">● Desconectado</div>
+    </div>
 
-    <script>
-        const api = "/api/tareas?id=mio";
-        const editor = document.getElementById("editor");
-        const status = document.getElementById("status");
+    <div class="content">
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="ingresa una tara...">
+            <button onclick="addTask()">añadir</button>
+        </div>
 
-        async function enviar() {
-            status.innerText = "Guardando...";
-            await fetch(api, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contenido: editor.value })
-            });
-            status.innerText = "En la nube";
+        <div class="counter">📊 Total de tareas: <span id="count">0</span></div>
+
+        <ul id="taskList" class="task-list"></ul>
+
+        <button class="btn-clear" onclick="clearAll()">🗑️ Borrar todas las tareas</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = "/api/tareas?id=taskflow_principal";
+    let tasks = [];
+
+    async function load() {
+        try {
+            const r = await fetch(API_URL);
+            tasks = await r.json();
+            render();
+            document.getElementById('sync').innerText = "● Sincronizado";
+            document.getElementById('sync').className = "online";
+        } catch (e) {
+            document.getElementById('sync').innerText = "● Error de red";
+            document.getElementById('sync').className = "";
         }
+    }
 
-        async function recibir() {
-            const res = await fetch(api);
-            const data = await res.json();
-            // Solo actualiza si lo que viene de la nube es diferente a lo que tienes escrito
-            if (data && data.contenido !== undefined && data.contenido !== editor.value) {
-                editor.value = data.contenido;
-                status.innerText = "Actualizado desde PC/Celular";
-            }
+    async function save() {
+        await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(tasks)
+        });
+    }
+
+    function render() {
+        const list = document.getElementById('taskList');
+        list.innerHTML = "";
+        document.getElementById('count').innerText = tasks.length;
+        tasks.forEach(t => {
+            list.innerHTML += `<li class="task-item">${t}</li>`;
+        });
+    }
+
+    function addTask() {
+        const input = document.getElementById('taskInput');
+        if (input.value.trim()) {
+            tasks.push(input.value);
+            input.value = "";
+            render();
+            save();
         }
+    }
 
-        // Revisa cambios cada segundo
-        setInterval(recibir, 1000);
-    </script>
+    function clearAll() {
+        if (confirm("¿Borrar todo?")) {
+            tasks = [];
+            render();
+            save();
+        }
+    }
+
+    load();
+    setInterval(load, 2000);
+</script>
+
 </body>
 </html>
