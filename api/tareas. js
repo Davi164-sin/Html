@@ -1,10 +1,46 @@
-let tasks = [];
+
+// Memoria global (se limpia si Vercel reinicia el servidor)
+let nube = {}; 
+
 export default function handler(req, res) {
-  if (req.method === 'GET') {
-    res.status(200).json(tasks);
-  } else if (req.method === 'POST') {
-    const { nombre } = req.body;
-    if (nombre) tasks.push({ nombre });
-    res.status(200).json(tasks);
-  }
+    // Permisos para que cualquier página pueda conectarse
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
+
+    // El ID que identifica a cada cliente (ej: ?id=ana o ?id=pedro)
+    const { id } = req.query;
+
+    if (!id) {
+        return res.status(400).json({ error: "Falta el ID del proyecto" });
+    }
+
+    // Si el proyecto no existe en la nube, lo creamos vacío
+    if (!nube[id]) {
+        nube[id] = [];
+    }
+
+    try {
+        if (req.method === 'GET') {
+            return res.status(200).json(nube[id]);
+        }
+
+        if (req.method === 'POST') {
+            // Guardamos lo que envíe el cliente en su cajón correspondiente
+            nube[id].push({
+                ...req.body,
+                fecha: new Date().toLocaleString()
+            });
+            return res.status(200).json(nube[id]);
+        }
+
+        if (req.method === 'DELETE') {
+            nube[id] = [];
+            return res.status(200).json([]);
+        }
+    } catch (e) {
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
 }
