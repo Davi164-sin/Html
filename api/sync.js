@@ -1,56 +1,45 @@
 let nube = {}; 
 
 export default function handler(req, res) {
-    // Permisos para que cualquier app se conecte sin errores
+    // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Responder a la verificación de conexión
+    // Manejar preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     
-    const { id } = req.query;
-    
-    // Si no hay ID, devolvemos lista vacía
-    if (!id) {
-        return res.status(200).json([]);
-    }
-    
-    // Si el ID no existe en la nube, lo creamos vacío
-    if (!nube[id]) {
-        nube[id] = [];
-    }
-    
-    // MÉTODO GET: Leer los datos
-    if (req.method === 'GET') {
-        return res.status(200).json(nube[id]);
-    }
-    
-    // MÉTODO POST: Guardar los datos
-    if (req.method === 'POST') {
-        nube[id] = req.body;
-        return res.status(200).json(nube[id]);
+    try {
+        const { id } = req.query;
+        
+        // Si no hay ID, devolver objeto vacío
+        if (!id) {
+            return res.status(200).json({ ventas: [], stock: [] });
+        }
+        
+        // Inicializar si no existe
+        if (!nube[id]) {
+            nube[id] = { ventas: [], stock: [] };
+        }
+        
+        // GET: Leer datos
+        if (req.method === 'GET') {
+            return res.status(200).json(nube[id]);
+        }
+        
+        // POST: Guardar datos
+        if (req.method === 'POST') {
+            nube[id] = req.body || { ventas: [], stock: [] };
+            return res.status(200).json(nube[id]);
+        }
+        
+        // Método no permitido
+        return res.status(405).json({ error: 'Método no permitido' });
+        
+    } catch (error) {
+        console.error('Error en sync:', error);
+        return res.status(500).json({ error: 'Error interno', details: error.message });
     }
 }
-```
-
-### **3. Despliega el cambio en Vercel**
-
-Después de crear el archivo, Vercel lo desplegará automáticamente.
-
-### **4. Verifica que funcione**
-
-Abre en tu navegador:
-```
-https://html-three-nu.vercel.app/api/sync?id=test
-```
-
-Debería mostrar: `[]`
-
----
-
-## ✅ **Entonces la URL completa será:**
-```
-https://html-three-nu.vercel.app/api/sync
