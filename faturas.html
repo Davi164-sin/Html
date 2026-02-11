@@ -6,7 +6,7 @@
     <title>IVENTIX PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --blue: #466eea; --green: #25d366; --red: #ff4444; --bg: #121212; --card: #1e1e1e; }
+        :root { --blue: #466eea; --green: #25d366; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --gold: #fbbf24; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
         .container { max-width: 450px; margin: auto; background: var(--card); border-radius: 20px; border: 1px solid #333; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .tabs { display: flex; background: #000; overflow-x: auto; }
@@ -22,386 +22,310 @@
         .card-info { background: #252525; padding: 15px; border-radius: 12px; margin-top: 10px; border-left: 4px solid var(--blue); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
         #qrcode { background: white; padding: 10px; margin: 15px auto; display: none; width: fit-content; border-radius: 10px; }
-        
-        /* NUEVO: Indicador de sincronización */
-        .sync-indicator {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .sync-online { background: var(--green); color: white; }
-        .sync-offline { background: var(--red); color: white; }
-        .sync-syncing { background: var(--blue); color: white; }
-        
-        .pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: white;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        #main-app { display: none; }
-        #login-screen { text-align: center; padding: 50px 20px; }
+        #bloqueo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+        #sync-status { font-size: 11px; padding: 8px; text-align: center; background: #1a1a1a; margin: -15px -15px 15px -15px; border-bottom: 1px solid #333; }
+        #sync-status.online { color: var(--green); }
+        #sync-status.offline { color: var(--red); }
+        .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #252525; border-radius: 10px; margin-bottom: 8px; border-left: 3px solid var(--green); }
+        .trend-rank { background: var(--blue); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .trend-info { flex: 1; margin: 0 12px; }
+        .trend-price { color: var(--green); font-weight: bold; }
+        .profit-badge { background: var(--green); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .cost-badge { background: var(--red); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .inv-item { background: #252525; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
+        .inv-row { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; }
+        .label-small { color: #999; font-size: 11px; }
     </style>
 </head>
 <body>
 
-    <!-- Indicador de sincronización -->
-    <div id="sync-status" class="sync-indicator sync-offline">
-        <div class="pulse"></div>
-        <span>DESCONECTADO</span>
+    <div id="bloqueo">
+        <h1 style="color:var(--red)">🔒 LICENCIA EXPIRADA</h1>
+        <input type="text" id="key-bloqueo" style="width: 80%; text-align: center;" placeholder="Código de Activación">
+        <button class="btn btn-blue" onclick="activar()" style="width: 80%;">ACTIVAR</button>
     </div>
 
-    <div id="login-screen">
-        <h3 style="color:var(--blue)">SOPORTE TECH ELITE</h3>
-        <p style="color:#888">Acceso Restringido</p>
-        
-        <!-- NUEVO: Campo para URL de la API -->
-        <input type="text" id="api-url" style="width: 90%; max-width: 350px; text-align: center; margin-bottom: 10px;" 
-               placeholder="URL de tu API (ej: https://tuapi.vercel.app/api/sync)">
-        
-        <input type="password" id="pass-input" style="width: 90%; max-width: 350px; text-align: center;" placeholder="Contraseña">
-        <button class="btn btn-blue" onclick="verificarLogin()" style="width: 90%; max-width: 350px;">ENTRAR</button>
-        
-        <p style="font-size: 11px; color: #666; margin-top: 20px;">
-            💡 Ingresa la URL de tu API para sincronizar datos entre dispositivos
-        </p>
-    </div>
-
-    <div class="container" id="main-app">
+    <div class="container">
         <div class="tabs">
             <button class="active" onclick="tab('venta', event)">Venta</button>
-            <button onclick="tab('stock', event)">Stock</button>
+            <button onclick="tab('inventario', event)">Stock</button>
             <button onclick="tab('estados', event)">Estados</button>
             <button onclick="tab('caja', event)">Caja</button>
+            <button onclick="tab('tendencias', event)">Tendencias</button>
         </div>
 
-        <div class="content"> 
-            <h1>Inventix Pro</h1>
-            <h2>Sistema de Gestión</h2>
+        <div class="content">
+            <div id="sync-status" class="offline">● Desconectado</div>
 
-            
             <div id="venta" class="section active">
-                <input type="text" id="cli" placeholder="Cliente">
-                <input type="text" id="mod" placeholder="Modelo">
-                <input type="text" id="tipo" placeholder="Trabajo">
-                <input type="number" id="tel" placeholder="WhatsApp">
-                <select id="sel-prod" onchange="autoPrecio()"></select>
-                <input type="number" id="pre" placeholder="Precio Final $">
-                <button class="btn btn-blue" onclick="procesarVenta()">REGISTRAR VENTA</button>
+                <input type="text" id="cli" placeholder="Nombre del Cliente">
+                <input type="text" id="mod" placeholder="Modelo del Celular">
+                <input type="text" id="tipo" placeholder="Trabajo (Ej: Pin de carga)">
+                <input type="number" id="tel" placeholder="WhatsApp del Cliente">
+                <select id="sel-prod" onchange="autoPrecio()">
+                    <option value="">-- Solo Mano de Obra --</option>
+                </select>
+                <input type="number" id="pre" placeholder="Precio Total $">
+                <button class="btn btn-blue" onclick="procesarVenta()">REGISTRAR Y DESCONTAR STOCK</button>
                 <div id="qrcode"></div>
-                <button id="btn-wa" class="btn btn-green" onclick="enviarWA()">ENVIAR RECIBO</button>
+                <button id="btn-wa" class="btn btn-green" onclick="enviarWA()">ENVIAR RECIBO POR WA</button>
             </div>
 
-            <div id="stock" class="section">
-                <div class="search-bar">
-                    <input type="text" id="bus-stock" placeholder="🔍 Buscar repuesto..." oninput="actualizarStock()">
-                </div>
-                <div id="resumen-inversion" class="stats-grid" style="margin-bottom:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="stat-box" style="background:#252525; padding:12px; border-radius:10px; text-align:center;">
-                        <small style="color:#888; font-size:10px;">INVERSIÓN</small><br>
-                        <b id="total-inv" style="color:var(--red); font-size:18px;">$0</b>
+            <div id="inventario" class="section">
+                <h3>Agregar Repuesto</h3>
+                <input type="text" id="n-prod" placeholder="Nombre del Repuesto">
+                <input type="number" id="c-prod" placeholder="Cantidad">
+                <input type="number" id="costo-prod" placeholder="💰 Costo de Compra (por unidad) $">
+                <input type="number" id="p-prod" placeholder="💵 Precio de Venta (por unidad) $">
+                <button class="btn btn-blue" onclick="guardarStock()">GUARDAR EN STOCK</button>
+                
+                <div class="card-info" style="margin-top: 20px; border-left-color: var(--gold);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <div>
+                            <div class="label-small">INVERSIÓN TOTAL</div>
+                            <h3 style="margin: 5px 0; color: var(--red);" id="total-inversion">$0</h3>
+                        </div>
+                        <div>
+                            <div class="label-small">GANANCIA POTENCIAL</div>
+                            <h3 style="margin: 5px 0; color: var(--green);" id="total-ganancia">$0</h3>
+                        </div>
                     </div>
-                    <div class="stat-box" style="background:#252525; padding:12px; border-radius:10px; text-align:center;">
-                        <small style="color:#888; font-size:10px;">UTILIDAD</small><br>
-                        <b id="total-gan" style="color:var(--green); font-size:18px;">$0</b>
+                    <div style="font-size: 11px; color: #999; margin-top: 8px;">
+                        📊 Si vendes todo el stock actual
                     </div>
                 </div>
-                <div class="card-info">
-                    <input type="text" id="n-prod" placeholder="Nombre Repuesto">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                        <input type="number" id="costo-prod" placeholder="Costo $">
-                        <input type="number" id="venta-prod" placeholder="Venta $">
-                    </div>
-                    <input type="number" id="c-prod" placeholder="Cantidad">
-                    <button class="btn btn-blue" onclick="guardarStock()">AGREGAR AL INVENTARIO</button>
-                </div>
-                <div id="lista-inv" style="margin-top:15px;"></div>
+
+                <h4 style="margin-top: 20px;">Inventario Actual</h4>
+                <div id="lista-inv"></div>
             </div>
 
             <div id="estados" class="section">
-                <h3>Reparaciones</h3>
+                <h3>Estado de Reparaciones</h3>
                 <div id="lista-estados"></div>
             </div>
 
             <div id="caja" class="section">
                 <div class="card-info"><small>TOTAL MES</small><h2 id="m-val">$ 0</h2></div>
                 <div class="card-info" style="border-left-color: var(--green);"><small>TOTAL AÑO</small><h2 id="a-val">$ 0</h2></div>
-                <button class="btn" style="background:#333; font-size:10px;" onclick="borrarTodo()">BORRAR TODO EL HISTORIAL</button>
-                <div id="historial" style="margin-top:20px;"></div>
+                
+                <div class="card-info" style="margin-top: 15px; border-left-color: var(--gold);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <div class="label-small">GANANCIAS REALES (MES)</div>
+                            <h3 style="margin: 5px 0; color: var(--green);" id="ganancia-mes">$0</h3>
+                        </div>
+                        <div>
+                            <div class="label-small">GANANCIAS REALES (AÑO)</div>
+                            <h3 style="margin: 5px 0; color: var(--green);" id="ganancia-ano">$0</h3>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #999; margin-top: 8px;">
+                        💡 Precio de venta - Costo del producto
+                    </div>
+                </div>
+
+                <h4 style="margin-top:20px;">Historial</h4>
+                <div id="historial"></div>
+            </div>
+
+            <div id="tendencias" class="section">
+                <h3>📊 Productos Más Vendidos del Mercado</h3>
+                <p style="font-size: 12px; color: #999; margin-bottom: 15px;">Repuestos con mayor demanda en el sector de técnicos de celulares</p>
+                
+                <div id="lista-tendencias">
+                    <div class="trend-item">
+                        <div class="trend-rank">1</div>
+                        <div class="trend-info">
+                            <strong>Pin de Carga / Puerto USB</strong><br>
+                            <small style="color: #999;">Mayor falla en smartphones</small>
+                        </div>
+                        <div class="trend-price">$15-35</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">2</div>
+                        <div class="trend-info">
+                            <strong>Batería / Pila</strong><br>
+                            <small style="color: #999;">Desgaste natural</small>
+                        </div>
+                        <div class="trend-price">$20-50</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">3</div>
+                        <div class="trend-info">
+                            <strong>Pantalla LCD / Táctil</strong><br>
+                            <small style="color: #999;">Caídas y golpes</small>
+                        </div>
+                        <div class="trend-price">$40-120</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">4</div>
+                        <div class="trend-info">
+                            <strong>Flex de Carga</strong><br>
+                            <small style="color: #999;">Conectividad</small>
+                        </div>
+                        <div class="trend-price">$12-25</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">5</div>
+                        <div class="trend-info">
+                            <strong>Tapa Trasera / Carcasa</strong><br>
+                            <small style="color: #999;">Estética y protección</small>
+                        </div>
+                        <div class="trend-price">$10-30</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">6</div>
+                        <div class="trend-info">
+                            <strong>Cámara Trasera/Frontal</strong><br>
+                            <small style="color: #999;">Foto y video</small>
+                        </div>
+                        <div class="trend-price">$18-60</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">7</div>
+                        <div class="trend-info">
+                            <strong>Parlante / Auricular</strong><br>
+                            <small style="color: #999;">Audio</small>
+                        </div>
+                        <div class="trend-price">$8-20</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">8</div>
+                        <div class="trend-info">
+                            <strong>Micrófono</strong><br>
+                            <small style="color: #999;">Llamadas y grabación</small>
+                        </div>
+                        <div class="trend-price">$10-22</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">9</div>
+                        <div class="trend-info">
+                            <strong>Botones Power/Volumen</strong><br>
+                            <small style="color: #999;">Uso frecuente</small>
+                        </div>
+                        <div class="trend-price">$8-18</div>
+                    </div>
+
+                    <div class="trend-item">
+                        <div class="trend-rank">10</div>
+                        <div class="trend-info">
+                            <strong>Vidrio Templado</strong><br>
+                            <small style="color: #999;">Protección pantalla</small>
+                        </div>
+                        <div class="trend-price">$5-15</div>
+                    </div>
+                </div>
+
+                <div class="card-info" style="margin-top: 20px; border-left-color: var(--green);">
+                    <strong>💡 Consejo:</strong><br>
+                    <small>Mantén stock de estos repuestos para maximizar tus ventas y reducir tiempos de espera.</small>
+                </div>
             </div>
         </div>
     </div>
 
 <script>
-    const PASS_CORRECTA = "1234";
+    const CLAVE = "VENTAS-2026-PRO";
+    const API_URL = "/api/tareas?id=tecnico_tablescell";
     let linkRecibo = "";
-    
-    // ============================================
-    // SISTEMA DE SINCRONIZACIÓN EN LA NUBE
-    // ============================================
-    let API_URL = "";
-    let SYNC_ID = "TABLESCELL_JSV"; // ID único para tu negocio
-    let syncInterval = null;
-    let isSyncing = false;
+    let syncInterval;
 
-    // Cargar URL de API guardada
-    window.addEventListener('load', () => {
-        const savedUrl = localStorage.getItem('API_URL');
-        if(savedUrl) {
-            document.getElementById('api-url').value = savedUrl;
-        }
-    });
-
-    function verificarLogin() {
-        const url = document.getElementById('api-url').value.trim();
-        const pass = document.getElementById('pass-input').value;
-        
-        if(pass !== PASS_CORRECTA) {
-            alert("Acceso denegado");
-            return;
-        }
-        
-        // Guardar URL de API
-        if(url) {
-            API_URL = url;
-            localStorage.setItem('API_URL', url);
-            iniciarSincronizacion();
-        }
-        
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        actualizarTodo();
-    }
-
-    // Iniciar sincronización automática
-    function iniciarSincronizacion() {
-        if(!API_URL) {
-            updateSyncStatus('offline');
-            return;
-        }
-        
-        // Sincronizar cada 3 segundos
-        syncInterval = setInterval(() => {
-            sincronizarConNube();
-        }, 3000);
-        
-        // Primera sincronización inmediata
-        sincronizarConNube();
-    }
-
-    // Sincronizar datos con la nube
+    // ====== SINCRONIZACIÓN CON LA API ======
     async function sincronizarConNube() {
-        if(isSyncing || !API_URL) return;
-        
-        isSyncing = true;
-        updateSyncStatus('syncing');
-        
         try {
-            // 1. SUBIR datos locales a la nube
-            const datosLocales = {
-                ventas: JSON.parse(localStorage.getItem('VENTAS_DB')) || [],
-                stock: JSON.parse(localStorage.getItem('STOCK_DB')) || []
-            };
-            
-            await fetch(API_URL + '?id=' + SYNC_ID, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosLocales)
-            });
-            
-            // 2. DESCARGAR datos actualizados de la nube
-            const response = await fetch(`${API_URL}?id=${SYNC_ID}`);
+            const response = await fetch(API_URL);
             const datosNube = await response.json();
-            
-            // 3. Actualizar localStorage solo si hay cambios
-            if(datosNube && Array.isArray(datosNube.ventas) && Array.isArray(datosNube.stock)) {
-                const ventasActuales = JSON.stringify(localStorage.getItem('VENTAS_DB'));
-                const stockActual = JSON.stringify(localStorage.getItem('STOCK_DB'));
-                const ventasNube = JSON.stringify(datosNube.ventas);
-                const stockNube = JSON.stringify(datosNube.stock);
-                
-                if(ventasActuales !== ventasNube || stockActual !== stockNube) {
-                    localStorage.setItem('VENTAS_DB', JSON.stringify(datosNube.ventas));
-                    localStorage.setItem('STOCK_DB', JSON.stringify(datosNube.stock));
-                    actualizarTodo();
-                }
+
+            if (datosNube && datosNube.length > 0) {
+                const datos = datosNube[0];
+                if (datos.STOCK_DB) localStorage.setItem('STOCK_DB', JSON.stringify(datos.STOCK_DB));
+                if (datos.VENTAS_DB) localStorage.setItem('VENTAS_DB', JSON.stringify(datos.VENTAS_DB));
             }
+
+            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
+            document.getElementById('sync-status').className = "online";
             
-            updateSyncStatus('online');
-        } catch (error) {
-            console.error('Error de sincronización:', error);
-            updateSyncStatus('offline');
-        } finally {
-            isSyncing = false;
+            actualizarTodo();
+        } catch (e) {
+            document.getElementById('sync-status').innerText = "● Sin conexión";
+            document.getElementById('sync-status').className = "offline";
         }
     }
 
-    // Actualizar indicador visual de sincronización
-    function updateSyncStatus(status) {
-        const indicator = document.getElementById('sync-status');
-        indicator.className = 'sync-indicator';
-        
-        if(status === 'online') {
-            indicator.classList.add('sync-online');
-            indicator.innerHTML = '<div class="pulse"></div><span>SINCRONIZADO</span>';
-        } else if(status === 'syncing') {
-            indicator.classList.add('sync-syncing');
-            indicator.innerHTML = '<div class="pulse"></div><span>SINCRONIZANDO...</span>';
-        } else {
-            indicator.classList.add('sync-offline');
-            indicator.innerHTML = '<div class="pulse"></div><span>SIN CONEXIÓN</span>';
+    async function guardarEnNube() {
+        try {
+            const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+            const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+            
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify([{ STOCK_DB: stock, VENTAS_DB: ventas }])
+            });
+
+            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
+            document.getElementById('sync-status').className = "online";
+        } catch (e) {
+            document.getElementById('sync-status').innerText = "● Error al guardar";
+            document.getElementById('sync-status').className = "offline";
         }
     }
 
-    // Forzar sincronización manual
-    function forzarSync() {
-        sincronizarConNube();
+    // ====== FUNCIONES PRINCIPALES ======
+    function checkLicencia() {
+        let v = localStorage.getItem('APP_VENC');
+        if (!v) { 
+            let d = new Date(); d.setDate(d.getDate() + 2); 
+            localStorage.setItem('APP_VENC', d.toISOString()); 
+        }
+        if (new Date() > new Date(localStorage.getItem('APP_VENC'))) {
+            document.getElementById('bloqueo').style.display = 'flex';
+        }
     }
 
-    // ============================================
-    // FUNCIONES ORIGINALES (SIN MODIFICAR)
-    // ============================================
+    function activar() {
+        if(document.getElementById('key-bloqueo').value === CLAVE) {
+            let d = new Date(); d.setFullYear(d.getFullYear() + 1);
+            localStorage.setItem('APP_VENC', d.toISOString());
+            location.reload();
+        }
+    }
 
     function guardarStock() {
-        const n = document.getElementById('n-prod').value,
-              costo = parseFloat(document.getElementById('costo-prod').value) || 0,
-              venta = parseFloat(document.getElementById('venta-prod').value) || 0,
-              cant = parseInt(document.getElementById('c-prod').value) || 0;
-
-        if(!n || cant <= 0) return alert("Datos incompletos");
-
+        const n = document.getElementById('n-prod').value;
+        const c = parseInt(document.getElementById('c-prod').value);
+        const costo = parseFloat(document.getElementById('costo-prod').value);
+        const p = parseFloat(document.getElementById('p-prod').value);
+        
+        if(!n || isNaN(c)) return alert("Completa los datos");
+        if(isNaN(costo) || isNaN(p)) return alert("Ingresa el costo y precio de venta");
+        
         let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-        db.push({ id: Date.now(), nom: n, costo, pre: venta, can: cant });
+        db.push({ 
+            id: Date.now(), 
+            nom: n, 
+            can: c, 
+            costo: costo,  // NUEVO: Costo de compra
+            pre: p 
+        });
         localStorage.setItem('STOCK_DB', JSON.stringify(db));
         
-        ['n-prod','costo-prod','venta-prod','c-prod'].forEach(id => document.getElementById(id).value = "");
+        // Limpiar campos
+        document.getElementById('n-prod').value = '';
+        document.getElementById('c-prod').value = '';
+        document.getElementById('costo-prod').value = '';
+        document.getElementById('p-prod').value = '';
         
-        // SINCRONIZAR después de guardar
-        forzarSync();
+        guardarEnNube();
         actualizarTodo();
-    }
-
-    function actualizarStock() {
-        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-        const bus = document.getElementById('bus-stock').value.toLowerCase();
-        let invTotal = 0; let ganTotal = 0;
-
-        let html = db.filter(i => i.nom.toLowerCase().includes(bus)).reverse().map(i => {
-            const inversionSub = i.costo * i.can;
-            const gananciaSub = (i.pre - i.costo) * i.can;
-            invTotal += inversionSub;
-            ganTotal += gananciaSub;
-
-            return `
-                <div class="card-info">
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${i.nom}</b>
-                        <b style="color:var(--blue)">${i.can} und</b>
-                    </div>
-                    <div style="font-size:11px; margin-top:5px; color:#888">
-                        Inversión: $${inversionSub.toLocaleString()} | 
-                        Ganancia: <span style="color:var(--green)">$${gananciaSub.toLocaleString()}</span>
-                    </div>
-                </div>`;
-        }).join('');
-
-        document.getElementById('lista-inv').innerHTML = html;
-        document.getElementById('total-inv').innerText = "$" + invTotal.toLocaleString();
-        document.getElementById('total-gan').innerText = "$" + ganTotal.toLocaleString();
-    }
-
-    function procesarVenta() {
-        const cli = document.getElementById('cli').value, mod = document.getElementById('mod').value,
-              tipo = document.getElementById('tipo').value, pre = document.getElementById('pre').value,
-              tel = document.getElementById('tel').value, idProd = document.getElementById('sel-prod').value;
-
-        if(!cli || !pre) return alert("Faltan datos");
-
-        if(idProd) {
-            let db = JSON.parse(localStorage.getItem('STOCK_DB'));
-            db = db.map(i => { if(i.id == idProd && i.can > 0) i.can -= 1; return i; });
-            localStorage.setItem('STOCK_DB', JSON.stringify(db));
-        }
-
-        let ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
-        ventas.push({ id: Date.now(), cli, mod, tipo, pre: Number(pre), tel, f: new Date().toISOString(), estado: 'pendiente' });
-        localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
-
-        const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
-        linkRecibo = `${base}recibo.html?n=${encodeURIComponent(cli)}&m=${encodeURIComponent(mod)}&t=${encodeURIComponent(tipo)}&p=${pre}`;
-
-        const qr = document.getElementById('qrcode');
-        qr.innerHTML = ""; qr.style.display = "block";
-        new QRCode(qr, { text: linkRecibo, width: 140, height: 140 });
-        document.getElementById('btn-wa').style.display = "block";
-        
-        // SINCRONIZAR después de venta
-        forzarSync();
-        actualizarTodo();
-    }
-
-    function actualizarTodo() {
-        actualizarStock();
-        const v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
-        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-
-        document.getElementById('sel-prod').innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + 
-            db.map(i => `<option value="${i.id}" data-p="${i.pre}">${i.nom} ($${i.pre})</option>`).join('');
-
-        document.getElementById('lista-estados').innerHTML = v.slice().reverse().map(x => `
-            <div class="card-info" style="border-left-color:${x.estado=='listo'?'var(--green)':'#f59e0b'}">
-                <b>${x.cli}</b> - <small>${x.mod}</small><br>
-                <div style="margin-top:10px">
-                    <button onclick="cambiarEstado(${x.id}, 'proceso')">🔧</button>
-                    <button onclick="cambiarEstado(${x.id}, 'listo')">✅</button>
-                </div>
-            </div>`).join('');
-
-        const h = new Date(); let m=0; let a=0;
-        v.forEach(x => {
-            let f = new Date(x.f);
-            if(f.getFullYear() === h.getFullYear()) { a += x.pre; if(f.getMonth() === h.getMonth()) m += x.pre; }
-        });
-        document.getElementById('m-val').innerText = "$" + m.toLocaleString();
-        document.getElementById('a-val').innerText = "$" + a.toLocaleString();
-    }
-
-    function cambiarEstado(id, nuevo) {
-        let v = JSON.parse(localStorage.getItem('VENTAS_DB'));
-        v = v.map(x => { if(x.id == id) x.estado = nuevo; return x; });
-        localStorage.setItem('VENTAS_DB', JSON.stringify(v));
-        
-        // SINCRONIZAR después de cambiar estado
-        forzarSync();
-        actualizarTodo();
-    }
-
-    function borrarTodo() { 
-        if(confirm("¿Borrar toda la caja?")) { 
-            localStorage.removeItem('VENTAS_DB'); 
-            forzarSync();
-            actualizarTodo(); 
-        } 
-    }
-    
-    function tab(id, e) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active'); e.target.classList.add('active');
     }
 
     function autoPrecio() {
@@ -409,17 +333,203 @@
         const precio = sel.options[sel.selectedIndex].dataset.p;
         if(precio) document.getElementById('pre').value = precio;
     }
-    
-    function enviarWA() {
+
+    function procesarVenta() {
+        const cli = document.getElementById('cli').value;
+        const mod = document.getElementById('mod').value;
+        const tipo = document.getElementById('tipo').value;
+        const pre = document.getElementById('pre').value;
         const tel = document.getElementById('tel').value;
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent("Recibo de Soporte Tech: " + linkRecibo)}`);
+        const idProd = document.getElementById('sel-prod').value;
+
+        if(!cli || !pre) return alert("Faltan datos");
+
+        let costoProducto = 0;
+        
+        // Descontar del inventario y obtener costo
+        if(idProd) {
+            let db = JSON.parse(localStorage.getItem('STOCK_DB'));
+            db = db.map(i => { 
+                if(i.id == idProd && i.can > 0) {
+                    i.can -= 1;
+                    costoProducto = i.costo || 0; // Guardar el costo del producto
+                }
+                return i; 
+            });
+            localStorage.setItem('STOCK_DB', JSON.stringify(db));
+        }
+
+        // Guardar Venta con costo
+        let ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+        const idVenta = Date.now();
+        ventas.push({ 
+            id: idVenta, 
+            cli, 
+            mod, 
+            tipo, 
+            pre: Number(pre),
+            costo: costoProducto, // NUEVO: Guardar costo del producto
+            tel, 
+            f: new Date().toISOString(), 
+            estado: 'pendiente' 
+        });
+        localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
+
+        guardarEnNube();
+
+        const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
+        linkRecibo = `${base}usuario.html?n=${encodeURIComponent(cli)}&m=${encodeURIComponent(mod)}&t=${encodeURIComponent(tipo)}&p=${pre}`;
+
+        const qr = document.getElementById('qrcode');
+        qr.innerHTML = ""; qr.style.display = "block";
+        new QRCode(qr, { text: linkRecibo, width: 140, height: 140 });
+        document.getElementById('btn-wa').style.display = "block";
+        
+        // Limpiar campos
+        document.getElementById('cli').value = '';
+        document.getElementById('mod').value = '';
+        document.getElementById('tipo').value = '';
+        document.getElementById('pre').value = '';
+        document.getElementById('tel').value = '';
+        document.getElementById('sel-prod').value = '';
+        
+        actualizarTodo();
     }
 
-    // Detener sincronización al cerrar
-    window.addEventListener('beforeunload', () => {
-        if(syncInterval) clearInterval(syncInterval);
-    });
+    function enviarWA() {
+        const tel = document.getElementById('tel').value;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent("Hola! Aquí tienes tu recibo: " + linkRecibo)}`);
+    }
+
+    function cambiarEstado(id, nuevo) {
+        let v = JSON.parse(localStorage.getItem('VENTAS_DB'));
+        v = v.map(x => { if(x.id == id) x.estado = nuevo; return x; });
+        localStorage.setItem('VENTAS_DB', JSON.stringify(v));
+        guardarEnNube();
+        actualizarTodo();
+    }
+
+    function actualizarTodo() {
+        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        const v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+
+        // Calcular inversión y ganancia total del inventario
+        let inversionTotal = 0;
+        let gananciaPotencial = 0;
+        
+        db.forEach(i => {
+            const costo = i.costo || 0;
+            const precio = i.pre || 0;
+            const cantidad = i.can || 0;
+            
+            inversionTotal += costo * cantidad;
+            gananciaPotencial += (precio - costo) * cantidad;
+        });
+        
+        document.getElementById('total-inversion').innerText = '$' + inversionTotal.toLocaleString();
+        document.getElementById('total-ganancia').innerText = '$' + gananciaPotencial.toLocaleString();
+
+        // Actualizar Select de Venta
+        const sel = document.getElementById('sel-prod');
+        sel.innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + db.map(i => 
+            `<option value="${i.id}" data-p="${i.pre}">${i.nom} (Stock: ${i.can})</option>`
+        ).join('');
+
+        // Mostrar Inventario con costos y ganancias
+        document.getElementById('lista-inv').innerHTML = db.map(i => {
+            const costo = i.costo || 0;
+            const ganancia = (i.pre || 0) - costo;
+            const margen = costo > 0 ? ((ganancia / costo) * 100).toFixed(0) : 0;
+            
+            return `
+                <div class="inv-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 15px;">${i.nom}</strong>
+                        <span style="background: var(--blue); padding: 5px 10px; border-radius: 6px; font-weight: bold;">${i.can} und</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Costo unitario:</span>
+                        <span class="cost-badge">$${costo.toLocaleString()}</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Precio venta:</span>
+                        <span style="color: white; font-weight: bold;">$${i.pre.toLocaleString()}</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Ganancia unitaria:</span>
+                        <span class="profit-badge">+$${ganancia.toLocaleString()} (${margen}%)</span>
+                    </div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; color: #999;">
+                         Inversión total: <b style="color: var(--red);">$${(costo * i.can).toLocaleString()}</b> | 
+                         Si vendes todo: <b style="color: var(--green);">$${((i.pre - costo) * i.can).toLocaleString()}</b>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Estados
+        document.getElementById('lista-estados').innerHTML = v.slice().reverse().map(x => `
+            <div class="card-info" style="border-left-color:${x.estado=='listo'?'var(--green)':'#f59e0b'}">
+                <b>${x.cli}</b> - ${x.mod}<br>
+                <small>Estado: ${x.estado.toUpperCase()}</small><br>
+                <button onclick="cambiarEstado(${x.id}, 'proceso')" style="font-size:9px">EN PROCESO</button>
+                <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px">LISTO</button>
+            </div>`).join('');
+
+        // Caja con ganancias reales
+        const h = new Date();
+        let m = 0, a = 0;
+        let gananciaMes = 0, gananciaAno = 0;
+        
+        v.forEach(x => {
+            let f = new Date(x.f);
+            const ventaTotal = x.pre || 0;
+            const costoVenta = x.costo || 0;
+            const gananciaVenta = ventaTotal - costoVenta;
+            
+            if(f.getFullYear() === h.getFullYear()) {
+                a += ventaTotal;
+                gananciaAno += gananciaVenta;
+                
+                if(f.getMonth() === h.getMonth()) {
+                    m += ventaTotal;
+                    gananciaMes += gananciaVenta;
+                }
+            }
+        });
+        
+        document.getElementById('m-val').innerText = "$ " + m.toLocaleString();
+        document.getElementById('a-val').innerText = "$ " + a.toLocaleString();
+        document.getElementById('ganancia-mes').innerText = "$" + gananciaMes.toLocaleString();
+        document.getElementById('ganancia-ano').innerText = "$" + gananciaAno.toLocaleString();
+        
+        document.getElementById('historial').innerHTML = v.slice(-4).reverse().map(x => {
+            const ganancia = (x.pre || 0) - (x.costo || 0);
+            return `
+                <div class="card-info" style="font-size:10px">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>${x.cli}</b>
+                        <span style="color: var(--green); font-weight: bold;">$${x.pre}</span>
+                    </div>
+                    ${x.costo > 0 ? `<div style="margin-top: 4px; color: #999;">Ganancia: <span style="color: var(--green);">+$${ganancia.toLocaleString()}</span></div>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function tab(id, e) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); 
+        e.target.classList.add('active');
+    }
+
+    window.onload = () => { 
+        checkLicencia(); 
+        sincronizarConNube(); 
+        actualizarTodo();
+        syncInterval = setInterval(sincronizarConNube, 3000);
+    };
 </script>
-  
 </body>
 </html>
