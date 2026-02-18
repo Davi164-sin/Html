@@ -23,7 +23,8 @@
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
         #qrcode { background: white; padding: 10px; margin: 15px auto; display: none; width: fit-content; border-radius: 10px; }
         #bloqueo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
-        #sync-status { font-size: 11px; padding: 8px; text-align: center; background: #1a1a1a; margin: -15px -15px 15px -15px; border-bottom: 1px solid #333; }
+        #sync-status { font-size: 11px; padding: 8px; text-align: center; background: #1a1a1a; margin: -15px -15px 15px -15px; border-bottom: 1px solid #333; cursor: pointer; }
+        #sync-status:hover { opacity: 0.8; }
         #sync-status.online { color: var(--green); }
         #sync-status.offline { color: var(--red); }
         .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #252525; border-radius: 10px; margin-bottom: 8px; border-left: 3px solid var(--green); }
@@ -36,7 +37,7 @@
         .inv-row { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; }
         .label-small { color: #999; font-size: 11px; }
         .conte { width: max-content; padding: 10px; border: 1px solid #ccc; border-radius: 10px; margin: auto; }
-        h1, h2 { width: 100%; margin: 0; padding: 0; font-family: sans-serif; text-align: center; background-color: #3456;}
+        h1, h2 { width: 100%; margin: 0; padding: 0; font-family: sans-serif; text-align: center; }
 
         /* Buscador */
         .search-wrapper { position: relative; margin: 10px 0 4px; }
@@ -56,8 +57,9 @@
         <button class="btn btn-blue" onclick="activar()" style="width: 80%;">ACTIVAR</button>
     </div>
     <div class="conte">
-    <h1> SERVICIO TENICO</h1>
-    <h2> TABLLESCELL.JVS</h2>
+        <h1>SERVICIO TÉCNICO</h1>
+        <h2>TABLESCELL-JSV</h2>
+    </div>
     <div class="container">
         <div class="tabs">
             <button class="active" onclick="tab('venta', event)">Venta</button>
@@ -68,7 +70,7 @@
         </div>
 
         <div class="content">
-            <div id="sync-status" class="offline">● Desconectado</div>
+            <div id="sync-status" class="offline" onclick="forzarSync()" title="Click para sincronizar manualmente">● Desconectado</div>
 
             <div id="venta" class="section active">
                 <input type="text" id="cli" placeholder="Nombre del Cliente">
@@ -217,48 +219,58 @@
 
 <script>
     const CLAVE = "VENTAS-2026-PRO";
-    const API_URL = "/api/tareas?id=tecnico_tablescell";
+    const API_URL = "https://html-three-nu.vercel.app/api/sync";
+    const SYNC_ID = "tecnico_tablescell";
     let linkRecibo = "";
     let syncInterval;
+    let isSyncing = false;
 
-    // ====== SINCRONIZACIÓN CON LA API ======
+    // ====== SINCRONIZACIÓN MEJORADA CON LA API ======
     async function sincronizarConNube() {
+        if(isSyncing) return;
+        
+        isSyncing = true;
         try {
-            const response = await fetch(API_URL);
+            // 1. Subir datos locales
+            const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+            const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
+            
+            await fetch(API_URL + '?id=' + SYNC_ID, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ stock, ventas })
+            });
+
+            // 2. Descargar datos actualizados
+            const response = await fetch(API_URL + '?id=' + SYNC_ID);
             const datosNube = await response.json();
 
-            if (datosNube && datosNube.length > 0) {
-                const datos = datosNube[0];
-                if (datos.STOCK_DB) localStorage.setItem('STOCK_DB', JSON.stringify(datos.STOCK_DB));
-                if (datos.VENTAS_DB) localStorage.setItem('VENTAS_DB', JSON.stringify(datos.VENTAS_DB));
+            if (datosNube && datosNube.stock && datosNube.ventas) {
+                const stockActual = JSON.stringify(stock);
+                const ventasActuales = JSON.stringify(ventas);
+                const stockNube = JSON.stringify(datosNube.stock);
+                const ventasNube = JSON.stringify(datosNube.ventas);
+                
+                if(stockActual !== stockNube || ventasActuales !== ventasNube) {
+                    localStorage.setItem('STOCK_DB', stockNube);
+                    localStorage.setItem('VENTAS_DB', ventasNube);
+                    actualizarTodo();
+                }
             }
 
-            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
+            document.getElementById('sync-status').innerText = "● Sincronizado ✓";
             document.getElementById('sync-status').className = "online";
-            actualizarTodo();
         } catch (e) {
             document.getElementById('sync-status').innerText = "● Sin conexión";
             document.getElementById('sync-status').className = "offline";
+            console.log('Error sync:', e);
+        } finally {
+            isSyncing = false;
         }
     }
 
-    async function guardarEnNube() {
-        try {
-            const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-            const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
-
-            await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify([{ STOCK_DB: stock, VENTAS_DB: ventas }])
-            });
-
-            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
-            document.getElementById('sync-status').className = "online";
-        } catch (e) {
-            document.getElementById('sync-status').innerText = "● Error al guardar";
-            document.getElementById('sync-status').className = "offline";
-        }
+    function forzarSync() {
+        sincronizarConNube();
     }
 
     // ====== BUSCADOR DE INVENTARIO ======
@@ -301,7 +313,6 @@
             const ganancia = (i.pre || 0) - costo;
             const margen = costo > 0 ? ((ganancia / costo) * 100).toFixed(0) : 0;
 
-            // Resaltar coincidencia buscada
             let nombre = i.nom;
             if (busqueda) {
                 const regex = new RegExp(`(${busqueda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
@@ -372,7 +383,7 @@
         document.getElementById('costo-prod').value = '';
         document.getElementById('p-prod').value = '';
 
-        guardarEnNube();
+        sincronizarConNube();
         actualizarTodo();
     }
 
@@ -395,14 +406,24 @@
         let costoProducto = 0;
 
         if(idProd) {
-            let db = JSON.parse(localStorage.getItem('STOCK_DB'));
+            let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+            let encontrado = false;
+            
             db = db.map(i => {
-                if(i.id == idProd && i.can > 0) {
-                    i.can -= 1;
-                    costoProducto = i.costo || 0;
+                if(i.id == idProd) {
+                    if(i.can > 0) {
+                        i.can -= 1;
+                        costoProducto = i.costo || 0;
+                        encontrado = true;
+                    }
                 }
                 return i;
             });
+            
+            if(!encontrado) {
+                return alert("⚠️ No hay stock disponible");
+            }
+            
             localStorage.setItem('STOCK_DB', JSON.stringify(db));
         }
 
@@ -414,10 +435,10 @@
         });
         localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
 
-        guardarEnNube();
+        sincronizarConNube();
 
         const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
-        linkRecibo = `${base}usuario.html?n=${encodeURIComponent(cli)}&m=${encodeURIComponent(mod)}&t=${encodeURIComponent(tipo)}&p=${pre}`;
+        linkRecibo = `${base}recibo.html?n=${encodeURIComponent(cli)}&m=${encodeURIComponent(mod)}&t=${encodeURIComponent(tipo)}&p=${pre}`;
 
         const qr = document.getElementById('qrcode');
         qr.innerHTML = ""; qr.style.display = "block";
@@ -443,7 +464,7 @@
         let v = JSON.parse(localStorage.getItem('VENTAS_DB'));
         v = v.map(x => { if(x.id == id) x.estado = nuevo; return x; });
         localStorage.setItem('VENTAS_DB', JSON.stringify(v));
-        guardarEnNube();
+        sincronizarConNube();
         actualizarTodo();
     }
 
@@ -478,8 +499,8 @@
             <div class="card-info" style="border-left-color:${x.estado=='listo'?'var(--green)':'#f59e0b'}">
                 <b>${x.cli}</b> - ${x.mod}<br>
                 <small>Estado: ${x.estado.toUpperCase()}</small><br>
-                <button onclick="cambiarEstado(${x.id}, 'proceso')" style="font-size:9px">EN PROCESO</button>
-                <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px">LISTO</button>
+                <button onclick="cambiarEstado(${x.id}, 'proceso')" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
             </div>`).join('');
 
         // Caja con ganancias reales
@@ -535,4 +556,4 @@
     };
 </script>
 </body>
-                        </html>
+</html>
