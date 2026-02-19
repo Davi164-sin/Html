@@ -19,6 +19,7 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; display: none; }
+        .btn-print { background: #6b7280; color: white; display: none; }
         .card-info { background: #252525; padding: 15px; border-radius: 12px; margin-top: 10px; border-left: 4px solid var(--blue); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
         #qrcode { background: white; padding: 10px; margin: 15px auto; display: none; width: fit-content; border-radius: 10px; }
@@ -47,6 +48,58 @@
         .search-count { font-size: 11px; color: #888; text-align: right; margin: 4px 2px 8px; min-height: 16px; }
         .no-results { text-align: center; padding: 30px 10px; color: #555; font-size: 13px; }
         .no-results span { font-size: 28px; display: block; margin-bottom: 8px; }
+
+        /* Estilos de impresión */
+        @media print {
+            body * { visibility: hidden; }
+            #factura-print, #factura-print * { visibility: visible; }
+            #factura-print { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+            }
+        }
+        
+        #factura-print {
+            display: none;
+            background: white;
+            color: black;
+            padding: 30px;
+            max-width: 400px;
+            margin: 20px auto;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .factura-header {
+            text-align: center;
+            border-bottom: 2px dashed black;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .factura-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .factura-total {
+            border-top: 2px dashed black;
+            margin-top: 15px;
+            padding-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .factura-footer {
+            text-align: center;
+            margin-top: 20px;
+            border-top: 2px dashed black;
+            padding-top: 15px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +137,7 @@
                 <button class="btn btn-blue" onclick="procesarVenta()">REGISTRAR Y DESCONTAR STOCK</button>
                 <div id="qrcode"></div>
                 <button id="btn-wa" class="btn btn-green" onclick="enviarWA()">ENVIAR RECIBO POR WA</button>
+                <button id="btn-print" class="btn btn-print" onclick="imprimirFactura()">🖨️ IMPRIMIR FACTURA</button>
             </div>
 
             <div id="inventario" class="section">
@@ -217,6 +271,9 @@
         </div>
     </div>
 
+    <!-- Factura para imprimir (oculta) -->
+    <div id="factura-print"></div>
+
 <script>
     const CLAVE = "VENTAS-2026-PRO";
     const API_URL = "https://html-three-nu.vercel.app/api/sync";
@@ -224,6 +281,7 @@
     let linkRecibo = "";
     let syncInterval;
     let isSyncing = false;
+    let ultimaVenta = null;
 
     // ====== SINCRONIZACIÓN MEJORADA CON LA API ======
     async function sincronizarConNube() {
@@ -231,7 +289,6 @@
         
         isSyncing = true;
         try {
-            // 1. Subir datos locales
             const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
             const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
             
@@ -241,7 +298,6 @@
                 body: JSON.stringify({ stock, ventas })
             });
 
-            // 2. Descargar datos actualizados
             const response = await fetch(API_URL + '?id=' + SYNC_ID);
             const datosNube = await response.json();
 
@@ -263,7 +319,6 @@
         } catch (e) {
             document.getElementById('sync-status').innerText = "● Sin conexión";
             document.getElementById('sync-status').className = "offline";
-            console.log('Error sync:', e);
         } finally {
             isSyncing = false;
         }
@@ -404,6 +459,7 @@
         if(!cli || !pre) return alert("Faltan datos");
 
         let costoProducto = 0;
+        let nombreProducto = 'Mano de obra';
 
         if(idProd) {
             let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
@@ -414,6 +470,7 @@
                     if(i.can > 0) {
                         i.can -= 1;
                         costoProducto = i.costo || 0;
+                        nombreProducto = i.nom;
                         encontrado = true;
                     }
                 }
@@ -435,6 +492,18 @@
         });
         localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
 
+        // Guardar última venta para impresión
+        ultimaVenta = {
+            cliente: cli,
+            modelo: mod,
+            trabajo: tipo,
+            precio: Number(pre),
+            costo: costoProducto,
+            telefono: tel,
+            fecha: new Date().toLocaleString('es-ES'),
+            productoNombre: nombreProducto
+        };
+
         sincronizarConNube();
 
         const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
@@ -444,6 +513,7 @@
         qr.innerHTML = ""; qr.style.display = "block";
         new QRCode(qr, { text: linkRecibo, width: 140, height: 140 });
         document.getElementById('btn-wa').style.display = "block";
+        document.getElementById('btn-print').style.display = "block";
 
         document.getElementById('cli').value = '';
         document.getElementById('mod').value = '';
@@ -460,6 +530,75 @@
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent("Hola! Aquí tienes tu recibo: " + linkRecibo)}`);
     }
 
+    function imprimirFactura() {
+        if(!ultimaVenta) {
+            alert("⚠️ No hay factura para imprimir");
+            return;
+        }
+
+        const factura = document.getElementById('factura-print');
+        const ganancia = ultimaVenta.precio - ultimaVenta.costo;
+        
+        factura.innerHTML = `
+            <div class="factura-header">
+                <h2 style="margin: 0;">TABLESCELL-JSV</h2>
+                <p style="margin: 5px 0;">Servicio Técnico Especializado</p>
+                <p style="margin: 5px 0; font-size: 12px;">📞 WhatsApp: ${ultimaVenta.telefono || 'N/A'}</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <div class="factura-row">
+                    <span>Fecha:</span>
+                    <span>${ultimaVenta.fecha}</span>
+                </div>
+                <div class="factura-row">
+                    <span>Cliente:</span>
+                    <span><strong>${ultimaVenta.cliente}</strong></span>
+                </div>
+                <div class="factura-row">
+                    <span>Equipo:</span>
+                    <span>${ultimaVenta.modelo || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 15px 0; margin: 15px 0;">
+                <div class="factura-row">
+                    <span>Servicio:</span>
+                    <span>${ultimaVenta.trabajo || 'Reparación'}</span>
+                </div>
+                ${ultimaVenta.productoNombre !== 'Mano de obra' ? `
+                <div class="factura-row">
+                    <span>Repuesto:</span>
+                    <span>${ultimaVenta.productoNombre}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="factura-total">
+                <div class="factura-row">
+                    <span>TOTAL A PAGAR:</span>
+                    <span>$${ultimaVenta.precio.toLocaleString()}</span>
+                </div>
+            </div>
+
+            <div class="factura-footer">
+                <p style="margin: 5px 0;">¡Gracias por tu confianza!</p>
+                <p style="margin: 5px 0; font-size: 10px;">Garantía según tipo de servicio</p>
+                <p style="margin: 15px 0 5px; font-size: 10px;">★★★★★</p>
+                <p style="margin: 0; font-size: 10px;">Servicio Técnico Profesional</p>
+            </div>
+        `;
+        
+        factura.style.display = 'block';
+        
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                factura.style.display = 'none';
+            }, 500);
+        }, 100);
+    }
+
     function cambiarEstado(id, nuevo) {
         let v = JSON.parse(localStorage.getItem('VENTAS_DB'));
         v = v.map(x => { if(x.id == id) x.estado = nuevo; return x; });
@@ -472,7 +611,6 @@
         const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
         const v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
 
-        // Calcular inversión y ganancia total del inventario
         let inversionTotal = 0, gananciaPotencial = 0;
         db.forEach(i => {
             const costo = i.costo || 0;
@@ -483,18 +621,15 @@
         document.getElementById('total-inversion').innerText = '$' + inversionTotal.toLocaleString();
         document.getElementById('total-ganancia').innerText = '$' + gananciaPotencial.toLocaleString();
 
-        // Actualizar Select de Venta
         const sel = document.getElementById('sel-prod');
         sel.innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + db.map(i =>
             `<option value="${i.id}" data-p="${i.pre}">${i.nom} (Stock: ${i.can})</option>`
         ).join('');
 
-        // Renderizar inventario respetando búsqueda activa
         const busqueda = (document.getElementById('buscar-prod').value || '').toLowerCase().trim();
         const filtrado = busqueda ? db.filter(i => i.nom.toLowerCase().includes(busqueda)) : db;
         renderizarInventario(filtrado, busqueda);
 
-        // Estados
         document.getElementById('lista-estados').innerHTML = v.slice().reverse().map(x => `
             <div class="card-info" style="border-left-color:${x.estado=='listo'?'var(--green)':'#f59e0b'}">
                 <b>${x.cli}</b> - ${x.mod}<br>
@@ -503,7 +638,6 @@
                 <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
             </div>`).join('');
 
-        // Caja con ganancias reales
         const h = new Date();
         let m = 0, a = 0, gananciaMes = 0, gananciaAno = 0;
 
