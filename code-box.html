@@ -22,9 +22,27 @@
 
     header {
       width: 100%;
-      background: linear-gradient(235deg, #366eea 0%,  #764ba2 100%);
-      padding: 10px 10px;;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 15px;
       text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.5em;
+      margin-bottom: 5px;
+    }
+
+    #sync-indicator {
+      font-size: 0.85em;
+      opacity: 0.9;
+    }
+
+    #sync-indicator.online {
+      color: #4ade80;
+    }
+
+    #sync-indicator.offline {
+      color: #ef4444;
     }
 
     #tabs {
@@ -43,6 +61,7 @@
       font-weight: bold;
       cursor: pointer;
       border-bottom: 3px solid transparent;
+      transition: all 0.3s;
     }
 
     .tab.active {
@@ -75,14 +94,12 @@
     }
 
     #keyboard {
-      height: 100vw;
       height: 30vh;
       background: transparent;
       padding: 8px;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
-      margin-top 10px;
       box-sizing: border-box;
     }
 
@@ -94,13 +111,14 @@
       padding: 10px 12px;
       border-radius: 8px;
       font-size: 14px;
-      font-weight: 200px;
+      font-weight: bold;
       cursor: pointer;
-      margin-right: 10px;
+      transition: all 0.2s;
     }
 
     .key:active {
       background-color: #4e4e4e;
+      transform: scale(0.95);
     }
 
     #runButton {
@@ -108,12 +126,18 @@
       grid-column: span 2;
     }
 
+    .container-preview {
+      width: 100%;
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
     #preview {
       background: #fff;
-      height: 150px;
+      height: 300px;
       border-top: 2px solid #444;
       overflow: auto;
-      margin-botton: 10px;
     }
 
     #preview iframe {
@@ -132,63 +156,121 @@
       overflow-y: auto;
       border-top: 2px solid #444;
     }
-    .keyboard-mi {
-     color: white;
-    }
   </style>
 </head>
 <body>
   <header>
-    <h2>📱 CodeBox Mobile</h2>
-    <a href="subir.html">subir archivo</a>
-    <a href="archivos-subidos.html">ver archivo</a>
-    <a href="planilla.html"> planilla</a>
+    <h1>💻 CodeBox Mobile</h1>
+    <div id="sync-indicator" class="offline">● Sin conexión</div>
   </header>
+
+  <div class="container-preview">
+    <div id="preview"></div>
+  </div>
+
   <main>
-  <div id="tabs">
-    <button class="tab active" onclick="switchTab('html')">HTML</button>
-    <button class="tab" onclick="switchTab('css')">CSS</button>
-    <button class="tab" onclick="switchTab('js')">JS</button>
-  </div>
+    <div id="tabs">
+      <button class="tab active" onclick="switchTab('html')">HTML</button>
+      <button class="tab" onclick="switchTab('css')">CSS</button>
+      <button class="tab" onclick="switchTab('js')">JS</button>
+    </div>
 
+    <div class="editor-container">
+      <textarea id="htmlEditor" class="editor active" placeholder="<!-- Escribe tu HTML aquí -->"></textarea>
+      <textarea id="cssEditor" class="editor" placeholder="/* Escribe tu CSS aquí */"></textarea>
+      <textarea id="jsEditor" class="editor" placeholder="// Escribe tu JavaScript aquí"></textarea>
+    </div>
 
-  <div class="editor-container">
-    <textarea id="htmlEditor" class="editor active" placeholder="<!-- Escribe tu HTML aquí -->"></textarea>
-    <textarea id="cssEditor" class="editor" placeholder="/* Escribe tu CSS aquí */"></textarea>
-    <textarea id="jsEditor" class="editor" placeholder="// Escribe tu JavaScript aquí"></textarea>
-  </div>
+    <div id="keyboard">
+      <button class="key" onclick="insertText('{')">{</button>
+      <button class="key" onclick="insertText('}')">}</button>
+      <button class="key" onclick="insertText('(')">(</button>
+      <button class="key" onclick="insertText(')')">)</button>
+      <button class="key" onclick="insertText('<')"><</button>
+      <button class="key" onclick="insertText('>')">></button>
+      <button class="key" onclick="insertText(';')">;</button>
+      <button class="key" onclick="insertText('=')">=</button>
+      <button id="runButton" class="key" onclick="runCode()">▶ Ejecutar</button>
+      <button class="key" onclick="clearAll()">🗑️</button>
+      <button class="key" onclick="saveCode()">💾</button>
+    </div>
 
-  <div id="keyboard">
-    <button class="key" onclick="insertText('{')">{</button>
-    <button class="key" onclick="insertText('}')">}</button>
-    <button class="key" onclick="insertText('(')">(</button>
-    <button class="key" onclick="insertText(')')">)</button>
-    <button class="key" onclick="insertText('<')"><</button>
-    <button class="key" onclick="insertText('>')">></button>
-    <button class="key" onclick="insertText(';')">;</button>
-    <button class="key" onclick="insertText('=')">=</button>
-    <button id="runButton" class="key" onclick="runCode()">▶ Ejecutar</button>
-    <button class="key" onclick="clearAll()">🗑️</button>
-    <button class="key" onclick="saveCode()">💾</button>
-  </div>
-
-  <div id="preview"></div>
-  <div id="console"></div>
+    <div id="console"></div>
+  </main>
 
   <script>
+    const API_URL = window.location.origin + '/api/sync';
+    const SYNC_ID = 'codebox_editor';
     let currentTab = 'html';
+    let syncInterval;
+
     const editors = {
       html: document.getElementById('htmlEditor'),
       css: document.getElementById('cssEditor'),
       js: document.getElementById('jsEditor')
     };
 
+    // Sincronización con la nube
+    async function sincronizarConNube() {
+      try {
+        // Subir código actual
+        const codigo = {
+          html: editors.html.value,
+          css: editors.css.value,
+          js: editors.js.value,
+          lastUpdate: new Date().toISOString()
+        };
+
+        await fetch(`${API_URL}?id=${SYNC_ID}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock: [], ventas: [], codigo })
+        });
+
+        // Descargar código de la nube
+        const response = await fetch(`${API_URL}?id=${SYNC_ID}`);
+        const data = await response.json();
+
+        if (data.codigo) {
+          const codigoLocal = JSON.stringify(codigo);
+          const codigoNube = JSON.stringify(data.codigo);
+          
+          if (codigoLocal !== codigoNube && data.codigo.lastUpdate) {
+            const localTime = new Date(codigo.lastUpdate);
+            const nubeTime = new Date(data.codigo.lastUpdate);
+            
+            if (nubeTime > localTime) {
+              editors.html.value = data.codigo.html || '';
+              editors.css.value = data.codigo.css || '';
+              editors.js.value = data.codigo.js || '';
+            }
+          }
+        }
+
+        updateSyncStatus(true);
+      } catch (error) {
+        console.error('Error sync:', error);
+        updateSyncStatus(false);
+      }
+    }
+
+    function updateSyncStatus(online) {
+      const indicator = document.getElementById('sync-indicator');
+      if (online) {
+        indicator.className = 'online';
+        indicator.textContent = '● Sincronizado';
+      } else {
+        indicator.className = 'offline';
+        indicator.textContent = '● Sin conexión';
+      }
+    }
+
     function switchTab(tab) {
       currentTab = tab;
-
+      
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       event.target.classList.add('active');
-
+      
       document.querySelectorAll('.editor').forEach(e => e.classList.remove('active'));
       editors[tab].classList.add('active');
       editors[tab].focus();
@@ -200,10 +282,12 @@
       const end = editor.selectionEnd;
       const before = editor.value.substring(0, start);
       const after = editor.value.substring(end);
-
+      
       editor.value = before + text + after;
       editor.selectionStart = editor.selectionEnd = start + text.length;
       editor.focus();
+      
+      sincronizarConNube();
     }
 
     function runCode() {
@@ -212,7 +296,6 @@
 
       const html = editors.html.value;
       const css = `<style>${editors.css.value}</style>`;
-
       const jsWithConsole = `
         <script>
           const originalLog = console.log;
@@ -272,6 +355,7 @@
         editors.js.value = '';
         document.getElementById('preview').innerHTML = '';
         document.getElementById('console').innerHTML = '';
+        sincronizarConNube();
       }
     }
 
@@ -279,15 +363,19 @@
       localStorage.setItem('codebox-html', editors.html.value);
       localStorage.setItem('codebox-css', editors.css.value);
       localStorage.setItem('codebox-js', editors.js.value);
-      alert('💾 Código guardado');
+      sincronizarConNube();
+      alert('💾 Código guardado y sincronizado');
     }
 
     window.onload = function() {
       editors.html.value = localStorage.getItem('codebox-html') || '';
       editors.css.value = localStorage.getItem('codebox-css') || '';
       editors.js.value = localStorage.getItem('codebox-js') || '';
+      
+      // Iniciar sincronización
+      sincronizarConNube();
+      syncInterval = setInterval(sincronizarConNube, 5000);
     };
   </script>
- </main>
 </body>
-</html>
+  </html>
