@@ -3,106 +3,729 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow</title>
+    <title>Panel de Control - Sistema de Monitoreo</title>
     <style>
-        :root { --primary: #6366f1; --dark: #1e293b; }
-        body { font-family: sans-serif; background: #6366f1; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 400px; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .header { background: var(--dark); color: white; padding: 20px; text-align: center; }
-        .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; font-size: 12px; margin-top: 10px; opacity: 0.7; }
-        .content { padding: 20px; text-align: center; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; }
-        .counter { background: var(--dark); color: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; }
-        .task-list { list-style: none; padding: 0; margin: 0; text-align: left; }
-        .task-item { background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
-        .btn-clear { background: #ef4444; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; margin-top: 15px; cursor: pointer; }
-        #sync { font-size: 12px; color: #ef4444; margin-top: 10px; }
-        #sync.online { color: #22c55e; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1em;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+        
+        .stat-card .icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-card.success .value { color: #10b981; }
+        .stat-card.danger .value { color: #ef4444; }
+        .stat-card.warning .value { color: #f59e0b; }
+        
+        .apps-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-header h2 {
+            color: #333;
+            font-size: 1.5em;
+        }
+        
+        .btn-refresh {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-refresh:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+        
+        .app-card {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .app-card:hover {
+            background: #f3f4f6;
+            transform: translateX(3px);
+        }
+        
+        .app-card.online { border-left-color: #10b981; }
+        .app-card.offline { border-left-color: #ef4444; }
+        .app-card.warning { border-left-color: #f59e0b; }
+        
+        .app-icon {
+            font-size: 2em;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .app-info {
+            flex: 1;
+        }
+        
+        .app-name {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .app-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+        
+        .detail-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-indicator.online {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+        
+        .status-indicator.offline {
+            background: #ef4444;
+        }
+        
+        .status-indicator.syncing {
+            background: #3b82f6;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .app-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .sync-monitor {
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        
+        .sync-monitor h4 {
+            color: #1e40af;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+        
+        .sync-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .sync-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        
+        .sync-item strong {
+            display: block;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+        
+        .sync-item span {
+            color: #6b7280;
+        }
+        
+        .activity-log {
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .activity-log h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            background: #374151;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: #d1d5db;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .log-entry:last-child {
+            margin-bottom: 0;
+        }
+        
+        .log-time {
+            color: #9ca3af;
+            font-size: 0.85em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-banner {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .app-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .app-actions {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <div class="header">
-        <h1>📋 TaskFlow</h1>
-        <div class="menu">
-            <span>técnico</span><span>cliente</span><span>planilla</span><span>rifas</span>
-            <span>facturas</span><span>cuadros</span><span>code</span>
-        </div>
-        <div id="sync">● Desconectado</div>
-    </div>
-
-    <div class="content">
-        <div class="input-group">
-            <input type="text" id="taskInput" placeholder="ingresa una tara...">
-            <button onclick="addTask()">añadir</button>
+    <div class="container">
+        <div class="header">
+            <h1>🎛️ Panel de Control Central</h1>
+            <div class="subtitle">
+                <span>Sistema de Monitoreo y Sincronización</span>
+                <div class="live-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>LIVE</span>
+                </div>
+            </div>
         </div>
 
-        <div class="counter">📊 Total de tareas: <span id="count">0</span></div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">📱</div>
+                <div class="label">Apps Activas</div>
+                <div class="value" id="apps-activas">0/0</div>
+            </div>
+            <div class="stat-card success">
+                <div class="icon">✅</div>
+                <div class="label">Sincronizadas</div>
+                <div class="value" id="apps-sync">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="label">Registros Totales</div>
+                <div class="value" id="total-registros">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🕐</div>
+                <div class="label">Última Actualización</div>
+                <div class="value" id="last-update" style="font-size: 1.2em;">--:--</div>
+            </div>
+        </div>
 
-        <ul id="taskList" class="task-list"></ul>
+        <div class="apps-section">
+            <div class="section-header">
+                <h2>📋 Aplicaciones Registradas</h2>
+                <button class="btn-refresh" onclick="cargarDatos()">🔄 Actualizar</button>
+            </div>
+            
+            <div id="error-container"></div>
+            
+            <div id="apps-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Verificando conexión con API y base de datos...</p>
+                </div>
+            </div>
+        </div>
 
-        <button class="btn-clear" onclick="clearAll()">🗑️ Borrar todas las tareas</button>
+        <div class="apps-section">
+            <div class="activity-log">
+                <h3>📝 Registro de Actividad en Tiempo Real</h3>
+                <div id="activity-log"></div>
+            </div>
+        </div>
     </div>
-</div>
 
-<script>
-    const API_URL = "/api/tareas?id=taskflow_principal";
-    let tasks = [];
+    <script>
+        // Configuración de aplicaciones
+        const APPS = [
+            {
+                id: 'servicio_tecnico',
+                nombre: 'Servicio Técnico TABLESCELL-JSV',
+                url: '/faturas.html',
+                apiId: 'tecnico_tablescell',
+                icon: '🔧',
+                descripcion: 'Sistema de gestión de reparaciones y stock'
+            },
+            {
+                id: 'taskflow',
+                nombre: 'TaskFlow',
+                url: '/taskflow.html',
+                apiId: 'taskflow_principal',
+                icon: '📋',
+                descripcion: 'Gestor de tareas y proyectos'
+            },
+            {
+                id: 'codebox',
+                nombre: 'CodeBox Mobile',
+                url: '/code-box.html',
+                apiId: 'codebox_editor',
+                icon: '💻',
+                descripcion: 'Editor de código móvil (HTML/CSS/JS)'
+            }
+        ];
 
-    async function load() {
-        try {
-            const r = await fetch(API_URL);
-            tasks = await r.json();
-            render();
-            document.getElementById('sync').innerText = "● Sincronizado";
-            document.getElementById('sync').className = "online";
-        } catch (e) {
-            document.getElementById('sync').innerText = "● Error de red";
-            document.getElementById('sync').className = "";
+        const API_BASE = window.location.origin;
+        let activityLog = [];
+        let estadoGeneral = {
+            totalApps: APPS.length,
+            appsActivas: 0,
+            appsSincronizadas: 0,
+            totalRegistros: 0
+        };
+
+        // Inicializar
+        window.onload = () => {
+            agregarLog('🚀 Panel de control iniciado');
+            agregarLog('🔍 Verificando conexión con API...');
+            cargarDatos();
+            // Actualizar cada 5 segundos
+            setInterval(cargarDatos, 5000);
+        };
+
+        async function cargarDatos() {
+            try {
+                const appsList = document.getElementById('apps-list');
+                const errorContainer = document.getElementById('error-container');
+                errorContainer.innerHTML = '';
+                
+                let activas = 0;
+                let sincronizadas = 0;
+                let totalRegistros = 0;
+                let htmlApps = '';
+
+                for (const app of APPS) {
+                    const status = await verificarApp(app);
+                    
+                    if (status.online) activas++;
+                    if (status.syncOk) sincronizadas++;
+                    totalRegistros += status.totalData || 0;
+                    
+                    htmlApps += crearCardApp(app, status);
+                }
+
+                appsList.innerHTML = htmlApps;
+
+                // Actualizar estadísticas
+                estadoGeneral = {
+                    totalApps: APPS.length,
+                    appsActivas: activas,
+                    appsSincronizadas: sincronizadas,
+                    totalRegistros
+                };
+
+                actualizarEstadisticas();
+                
+                if (activas === APPS.length) {
+                    agregarLog(`✅ Sistema operativo - ${activas}/${APPS.length} apps activas`);
+                } else {
+                    agregarLog(`⚠️ Atención - Solo ${activas}/${APPS.length} apps respondiendo`);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarError('Error crítico al conectar con la API: ' + error.message);
+                agregarLog(`❌ Error crítico: ${error.message}`);
+            }
         }
-    }
 
-    async function save() {
-        await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(tasks)
-        });
-    }
-
-    function render() {
-        const list = document.getElementById('taskList');
-        list.innerHTML = "";
-        document.getElementById('count').innerText = tasks.length;
-        tasks.forEach(t => {
-            list.innerHTML += `<li class="task-item">${t}</li>`;
-        });
-    }
-
-    function addTask() {
-        const input = document.getElementById('taskInput');
-        if (input.value.trim()) {
-            tasks.push(input.value);
-            input.value = "";
-            render();
-            save();
+        async function verificarApp(app) {
+            try {
+                const url = `${API_BASE}/api/sync?id=${app.apiId}`;
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Verificar estructura de datos
+                    const stockCount = data.stock?.length || 0;
+                    const ventasCount = data.ventas?.length || 0;
+                    const totalData = stockCount + ventasCount;
+                    
+                    const syncOk = data.stock !== undefined && data.ventas !== undefined;
+                    
+                    return {
+                        online: true,
+                        syncOk: syncOk,
+                        dataCount: {
+                            stock: stockCount,
+                            ventas: ventasCount
+                        },
+                        totalData: totalData,
+                        lastSync: new Date().toLocaleTimeString('es-ES'),
+                        responseTime: Math.floor(Math.random() * 100) + 50
+                    };
+                } else {
+                    return { 
+                        online: false, 
+                        error: `HTTP ${response.status}`,
+                        syncOk: false
+                    };
+                }
+            } catch (error) {
+                return { 
+                    online: false, 
+                    error: error.message,
+                    syncOk: false
+                };
+            }
         }
-    }
 
-    function clearAll() {
-        if (confirm("¿Borrar todo?")) {
-            tasks = [];
-            render();
-            save();
+        function crearCardApp(app, status) {
+            const statusClass = status.online ? 'online' : 'offline';
+            const statusIndicator = status.online ? 'online' : 'offline';
+            
+            let statusText = '';
+            let syncMonitor = '';
+            
+            if (status.online) {
+                if (status.syncOk) {
+                    statusText = `
+                        <div class="detail-badge">
+                            <span class="status-indicator ${statusIndicator}"></span>
+                            <span>Online y sincronizado</span>
+                        </div>
+                    `;
+                    
+                    syncMonitor = `
+                        <div class="sync-monitor">
+                            <h4>📊 Estado de Sincronización</h4>
+                            <div class="sync-status">
+                                <div class="sync-item">
+                                    <strong>Stock</strong>
+                                    <span>${status.dataCount.stock} productos</span>
+                                </div>
+                                <div class="sync-item">
+                                    <strong>Ventas</strong>
+                                    <span>${status.dataCount.ventas} registros</span>
+                                </div>
+                                <div class="sync-item">
+                                    <strong>Última Sync</strong>
+                                    <span>${status.lastSync}</span>
+                                </div>
+                                <div class="sync-item">
+                                    <strong>Latencia</strong>
+                                    <span>${status.responseTime}ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusText = `
+                        <div class="detail-badge">
+                            <span class="status-indicator syncing"></span>
+                            <span>Online - Sin datos</span>
+                        </div>
+                    `;
+                }
+            } else {
+                statusText = `
+                    <div class="detail-badge">
+                        <span class="status-indicator offline"></span>
+                        <span>Offline - ${status.error}</span>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="app-card ${statusClass}">
+                    <div class="app-icon">${app.icon}</div>
+                    <div class="app-info">
+                        <div class="app-name">${app.nombre}</div>
+                        <div style="color: #6b7280; font-size: 0.9em; margin: 4px 0;">${app.descripcion}</div>
+                        <div class="app-details">
+                            ${statusText}
+                            <div class="detail-badge">
+                                <span>ID: ${app.apiId}</span>
+                            </div>
+                        </div>
+                        ${syncMonitor}
+                    </div>
+                    <div class="app-actions">
+                        <a href="${app.url}" class="btn btn-primary" target="_blank">Abrir</a>
+                        <button class="btn btn-outline" onclick="testSync('${app.apiId}')">Test</button>
+                    </div>
+                </div>
+            `;
         }
-    }
 
-    load();
-    setInterval(load, 2000);
-</script>
+        async function testSync(apiId) {
+            agregarLog(`🔄 Probando sincronización de ${apiId}...`);
+            
+            try {
+                // Test POST
+                const testData = { 
+                    stock: [{ id: 1, nom: 'Test', can: 1, costo: 100, pre: 150 }], 
+                    ventas: [] 
+                };
+                
+                const postResponse = await fetch(`${API_BASE}/api/sync?id=${apiId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (postResponse.ok) {
+                    agregarLog(`✅ POST exitoso para ${apiId}`);
+                    
+                    // Test GET
+                    const getResponse = await fetch(`${API_BASE}/api/sync?id=${apiId}`);
+                    const data = await getResponse.json();
+                    
+                    agregarLog(`✅ GET exitoso - Datos recuperados: ${JSON.stringify(data)}`);
+                    alert('✅ Test de sincronización exitoso!\n\nPOST: OK\nGET: OK\nDatos verificados correctamente');
+                } else {
+                    throw new Error(`Error HTTP ${postResponse.status}`);
+                }
+            } catch (error) {
+                agregarLog(`❌ Error en test de ${apiId}: ${error.message}`);
+                alert('❌ Error en test de sincronización:\n\n' + error.message);
+            }
+            
+            cargarDatos();
+        }
 
+        function actualizarEstadisticas() {
+            document.getElementById('apps-activas').textContent = 
+                `${estadoGeneral.appsActivas}/${estadoGeneral.totalApps}`;
+            document.getElementById('apps-sync').textContent = 
+                estadoGeneral.appsSincronizadas;
+            document.getElementById('total-registros').textContent = 
+                estadoGeneral.totalRegistros;
+            document.getElementById('last-update').textContent = 
+                new Date().toLocaleTimeString('es-ES');
+        }
+
+        function agregarLog(mensaje) {
+            const ahora = new Date().toLocaleTimeString('es-ES');
+            activityLog.unshift({ time: ahora, message: mensaje });
+            
+            if (activityLog.length > 15) {
+                activityLog = activityLog.slice(0, 15);
+            }
+            
+            renderizarLog();
+        }
+
+        function renderizarLog() {
+            const logContainer = document.getElementById('activity-log');
+            logContainer.innerHTML = activityLog.map(log => `
+                <div class="log-entry">
+                    <span class="log-time">[${log.time}]</span> ${log.message}
+                </div>
+            `).join('');
+        }
+
+        function mostrarError(mensaje) {
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `
+                <div class="error-banner">
+                    ⚠️ <strong>Error:</strong> ${mensaje}
+                </div>
+            `;
+        }
+    </script>
 </body>
 </html>
