@@ -276,8 +276,8 @@
 
             if (datosNube && datosNube.length > 0) {
                 const datos = datosNube[0];
-                if (datos.STOCK_DB) localStorage.setItem('STOCK_DB', JSON.stringify(datos.STOCK_DB));
-                if (datos.VENTAS_DB) localStorage.setItem('VENTAS_DB', JSON.stringify(datos.VENTAS_DB));
+                if (datos.STOCK_DB && datos.STOCK_DB.length > 0) localStorage.setItem('STOCK_DB', JSON.stringify(datos.STOCK_DB));
+                if (datos.VENTAS_DB && datos.VENTAS_DB.length > 0) localStorage.setItem('VENTAS_DB', JSON.stringify(datos.VENTAS_DB));
             }
 
             document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
@@ -523,10 +523,10 @@
                         <span class="profit-badge">+$${ganancia.toLocaleString()} (${margen}%)</span>
                     </div>
                     <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; color: #999;">
-                        💰 Inversión total: <b style="color: var(--red);">$${(costo * i.can).toLocaleString()}</b> | 
+                        💰 Inversión total: <b style="color: var(--red);">$${(costo * i.can).toLocaleString()}</b> |
                         💵 Si vendes todo: <b style="color: var(--green);">$${((i.pre - costo) * i.can).toLocaleString()}</b>
                     </div>
-                    
+
                     <!-- 🔥 CONTROLES DE INVENTARIO MANUAL 🔥 -->
                     <div class="stock-controls">
                         <button class="btn-mini" onclick="ajustarStock(${i.id}, -1)">➖</button>
