@@ -19,13 +19,14 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-blue { background: var(--blue); color: white; }
         .btn-green { background: var(--green); color: white; display: none; }
-        .btn-print { background: #6b7280; color: white; display: none; }
+        .btn-mini { background: #444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 0 2px; }
+        .btn-mini:hover { background: #555; }
+        .btn-eliminar { background: var(--red); color: white; padding: 8px 12px; font-size: 11px; border-radius: 6px; border: none; cursor: pointer; margin-top: 8px; }
         .card-info { background: #252525; padding: 15px; border-radius: 12px; margin-top: 10px; border-left: 4px solid var(--blue); }
         .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
         #qrcode { background: white; padding: 10px; margin: 15px auto; display: none; width: fit-content; border-radius: 10px; }
         #bloqueo { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
-        #sync-status { font-size: 11px; padding: 8px; text-align: center; background: #1a1a1a; margin: -15px -15px 15px -15px; border-bottom: 1px solid #333; cursor: pointer; }
-        #sync-status:hover { opacity: 0.8; }
+        #sync-status { font-size: 11px; padding: 8px; text-align: center; background: #1a1a1a; margin: -15px -15px 15px -15px; border-bottom: 1px solid #333; }
         #sync-status.online { color: var(--green); }
         #sync-status.offline { color: var(--red); }
         .trend-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #252525; border-radius: 10px; margin-bottom: 8px; border-left: 3px solid var(--green); }
@@ -38,7 +39,9 @@
         .inv-row { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; }
         .label-small { color: #999; font-size: 11px; }
         .conte { width: max-content; padding: 10px; border: 1px solid #ccc; border-radius: 10px; margin: auto; }
-        h1, h2 { width: 100%; margin: 0; padding: 0; font-family: sans-serif; text-align: center; }
+        h1, h2 { width: 100%; margin: 0; padding: 0; font-family: sans-serif; text-align: center; background-color: #3456;}
+        .stock-controls { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
+        .stock-controls span { flex: 1; text-align: center; font-size: 13px; color: #999; }
 
         /* Buscador */
         .search-wrapper { position: relative; margin: 10px 0 4px; }
@@ -48,58 +51,6 @@
         .search-count { font-size: 11px; color: #888; text-align: right; margin: 4px 2px 8px; min-height: 16px; }
         .no-results { text-align: center; padding: 30px 10px; color: #555; font-size: 13px; }
         .no-results span { font-size: 28px; display: block; margin-bottom: 8px; }
-
-        /* Estilos de impresión */
-        @media print {
-            body * { visibility: hidden; }
-            #factura-print, #factura-print * { visibility: visible; }
-            #factura-print { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-            }
-        }
-        
-        #factura-print {
-            display: none;
-            background: white;
-            color: black;
-            padding: 30px;
-            max-width: 400px;
-            margin: 20px auto;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .factura-header {
-            text-align: center;
-            border-bottom: 2px dashed black;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .factura-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            font-size: 14px;
-        }
-        
-        .factura-total {
-            border-top: 2px dashed black;
-            margin-top: 15px;
-            padding-top: 15px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .factura-footer {
-            text-align: center;
-            margin-top: 20px;
-            border-top: 2px dashed black;
-            padding-top: 15px;
-            font-size: 12px;
-        }
     </style>
 </head>
 <body>
@@ -109,10 +60,12 @@
         <input type="text" id="key-bloqueo" style="width: 80%; text-align: center;" placeholder="Código de Activación">
         <button class="btn btn-blue" onclick="activar()" style="width: 80%;">ACTIVAR</button>
     </div>
+
     <div class="conte">
         <h1>SERVICIO TÉCNICO</h1>
         <h2>TABLESCELL-JSV</h2>
     </div>
+
     <div class="container">
         <div class="tabs">
             <button class="active" onclick="tab('venta', event)">Venta</button>
@@ -123,7 +76,7 @@
         </div>
 
         <div class="content">
-            <div id="sync-status" class="offline" onclick="forzarSync()" title="Click para sincronizar manualmente">● Desconectado</div>
+            <div id="sync-status" class="offline">● Desconectado</div>
 
             <div id="venta" class="section active">
                 <input type="text" id="cli" placeholder="Nombre del Cliente">
@@ -137,7 +90,6 @@
                 <button class="btn btn-blue" onclick="procesarVenta()">REGISTRAR Y DESCONTAR STOCK</button>
                 <div id="qrcode"></div>
                 <button id="btn-wa" class="btn btn-green" onclick="enviarWA()">ENVIAR RECIBO POR WA</button>
-                <button id="btn-print" class="btn btn-print" onclick="imprimirFactura()">🖨️ IMPRIMIR FACTURA</button>
             </div>
 
             <div id="inventario" class="section">
@@ -213,52 +165,91 @@
                 <div id="lista-tendencias">
                     <div class="trend-item">
                         <div class="trend-rank">1</div>
-                        <div class="trend-info"><strong>Pin de Carga / Puerto USB</strong><br><small style="color: #999;">Mayor falla en smartphones</small></div>
+                        <div class="trend-info">
+                            <strong>Pin de Carga / Puerto USB</strong><br>
+                            <small style="color: #999;">Mayor falla en smartphones</small>
+                        </div>
                         <div class="trend-price">$15-35</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">2</div>
-                        <div class="trend-info"><strong>Batería / Pila</strong><br><small style="color: #999;">Desgaste natural</small></div>
+                        <div class="trend-info">
+                            <strong>Batería / Pila</strong><br>
+                            <small style="color: #999;">Desgaste natural</small>
+                        </div>
                         <div class="trend-price">$20-50</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">3</div>
-                        <div class="trend-info"><strong>Pantalla LCD / Táctil</strong><br><small style="color: #999;">Caídas y golpes</small></div>
+                        <div class="trend-info">
+                            <strong>Pantalla LCD / Táctil</strong><br>
+                            <small style="color: #999;">Caídas y golpes</small>
+                        </div>
                         <div class="trend-price">$40-120</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">4</div>
-                        <div class="trend-info"><strong>Flex de Carga</strong><br><small style="color: #999;">Conectividad</small></div>
+                        <div class="trend-info">
+                            <strong>Flex de Carga</strong><br>
+                            <small style="color: #999;">Conectividad</small>
+                        </div>
                         <div class="trend-price">$12-25</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">5</div>
-                        <div class="trend-info"><strong>Tapa Trasera / Carcasa</strong><br><small style="color: #999;">Estética y protección</small></div>
+                        <div class="trend-info">
+                            <strong>Tapa Trasera / Carcasa</strong><br>
+                            <small style="color: #999;">Estética y protección</small>
+                        </div>
                         <div class="trend-price">$10-30</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">6</div>
-                        <div class="trend-info"><strong>Cámara Trasera/Frontal</strong><br><small style="color: #999;">Foto y video</small></div>
+                        <div class="trend-info">
+                            <strong>Cámara Trasera/Frontal</strong><br>
+                            <small style="color: #999;">Foto y video</small>
+                        </div>
                         <div class="trend-price">$18-60</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">7</div>
-                        <div class="trend-info"><strong>Parlante / Auricular</strong><br><small style="color: #999;">Audio</small></div>
+                        <div class="trend-info">
+                            <strong>Parlante / Auricular</strong><br>
+                            <small style="color: #999;">Audio</small>
+                        </div>
                         <div class="trend-price">$8-20</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">8</div>
-                        <div class="trend-info"><strong>Micrófono</strong><br><small style="color: #999;">Llamadas y grabación</small></div>
+                        <div class="trend-info">
+                            <strong>Micrófono</strong><br>
+                            <small style="color: #999;">Llamadas y grabación</small>
+                        </div>
                         <div class="trend-price">$10-22</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">9</div>
-                        <div class="trend-info"><strong>Botones Power/Volumen</strong><br><small style="color: #999;">Uso frecuente</small></div>
+                        <div class="trend-info">
+                            <strong>Botones Power/Volumen</strong><br>
+                            <small style="color: #999;">Uso frecuente</small>
+                        </div>
                         <div class="trend-price">$8-18</div>
                     </div>
+
                     <div class="trend-item">
                         <div class="trend-rank">10</div>
-                        <div class="trend-info"><strong>Vidrio Templado</strong><br><small style="color: #999;">Protección pantalla</small></div>
+                        <div class="trend-info">
+                            <strong>Vidrio Templado</strong><br>
+                            <small style="color: #999;">Protección pantalla</small>
+                        </div>
                         <div class="trend-price">$5-15</div>
                     </div>
                 </div>
@@ -271,133 +262,51 @@
         </div>
     </div>
 
-    <!-- Factura para imprimir (oculta) -->
-    <div id="factura-print"></div>
-
 <script>
     const CLAVE = "VENTAS-2026-PRO";
-    const API_URL = "https://html-three-nu.vercel.app/api/sync";
-    const SYNC_ID = "tecnico_tablescell";
+    const API_URL = "/api/tareas?id=tecnico_tablescell";
     let linkRecibo = "";
     let syncInterval;
-    let isSyncing = false;
-    let ultimaVenta = null;
 
-    // ====== SINCRONIZACIÓN MEJORADA CON LA API ======
+    // ====== SINCRONIZACIÓN CON LA API ======
     async function sincronizarConNube() {
-        if(isSyncing) return;
-        
-        isSyncing = true;
         try {
-            const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-            const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
-            
-            await fetch(API_URL + '?id=' + SYNC_ID, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ stock, ventas })
-            });
-
-            const response = await fetch(API_URL + '?id=' + SYNC_ID);
+            const response = await fetch(API_URL);
             const datosNube = await response.json();
 
-            if (datosNube && datosNube.stock && datosNube.ventas) {
-                const stockActual = JSON.stringify(stock);
-                const ventasActuales = JSON.stringify(ventas);
-                const stockNube = JSON.stringify(datosNube.stock);
-                const ventasNube = JSON.stringify(datosNube.ventas);
-                
-                if(stockActual !== stockNube || ventasActuales !== ventasNube) {
-                    localStorage.setItem('STOCK_DB', stockNube);
-                    localStorage.setItem('VENTAS_DB', ventasNube);
-                    actualizarTodo();
-                }
+            if (datosNube && datosNube.length > 0) {
+                const datos = datosNube[0];
+                if (datos.STOCK_DB) localStorage.setItem('STOCK_DB', JSON.stringify(datos.STOCK_DB));
+                if (datos.VENTAS_DB) localStorage.setItem('VENTAS_DB', JSON.stringify(datos.VENTAS_DB));
             }
 
-            document.getElementById('sync-status').innerText = "● Sincronizado ✓";
+            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
             document.getElementById('sync-status').className = "online";
+
+            actualizarTodo();
         } catch (e) {
             document.getElementById('sync-status').innerText = "● Sin conexión";
             document.getElementById('sync-status').className = "offline";
-        } finally {
-            isSyncing = false;
         }
     }
 
-    function forzarSync() {
-        sincronizarConNube();
-    }
+    async function guardarEnNube() {
+        try {
+            const stock = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+            const ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
 
-    // ====== BUSCADOR DE INVENTARIO ======
-    function filtrarInventario() {
-        const busqueda = document.getElementById('buscar-prod').value.toLowerCase().trim();
-        document.getElementById('btn-clear').style.display = busqueda ? 'block' : 'none';
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify([{ STOCK_DB: stock, VENTAS_DB: ventas }])
+            });
 
-        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-        const filtrado = busqueda ? db.filter(i => i.nom.toLowerCase().includes(busqueda)) : db;
-
-        const countEl = document.getElementById('search-count');
-        countEl.innerText = busqueda
-            ? (filtrado.length > 0 ? `${filtrado.length} resultado${filtrado.length !== 1 ? 's' : ''} encontrado${filtrado.length !== 1 ? 's' : ''}` : '')
-            : '';
-
-        renderizarInventario(filtrado, busqueda);
-    }
-
-    function limpiarBusqueda() {
-        document.getElementById('buscar-prod').value = '';
-        document.getElementById('btn-clear').style.display = 'none';
-        document.getElementById('search-count').innerText = '';
-        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-        renderizarInventario(db, '');
-    }
-
-    function renderizarInventario(items, busqueda) {
-        if (items.length === 0 && busqueda) {
-            document.getElementById('lista-inv').innerHTML = `
-                <div class="no-results">
-                    <span>🔍</span>
-                    No se encontró <b>"${busqueda}"</b><br>
-                    <small>Intenta con otro nombre</small>
-                </div>`;
-            return;
+            document.getElementById('sync-status').innerText = "● Sincronizado con la nube";
+            document.getElementById('sync-status').className = "online";
+        } catch (e) {
+            document.getElementById('sync-status').innerText = "● Error al guardar";
+            document.getElementById('sync-status').className = "offline";
         }
-
-        document.getElementById('lista-inv').innerHTML = items.map(i => {
-            const costo = i.costo || 0;
-            const ganancia = (i.pre || 0) - costo;
-            const margen = costo > 0 ? ((ganancia / costo) * 100).toFixed(0) : 0;
-
-            let nombre = i.nom;
-            if (busqueda) {
-                const regex = new RegExp(`(${busqueda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                nombre = nombre.replace(regex, '<mark style="background:var(--blue);color:white;border-radius:3px;padding:0 2px;">$1</mark>');
-            }
-
-            return `
-                <div class="inv-item">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <strong style="font-size: 15px;">${nombre}</strong>
-                        <span style="background: var(--blue); padding: 5px 10px; border-radius: 6px; font-weight: bold;">${i.can} und</span>
-                    </div>
-                    <div class="inv-row">
-                        <span class="label-small">Costo unitario:</span>
-                        <span class="cost-badge">$${costo.toLocaleString()}</span>
-                    </div>
-                    <div class="inv-row">
-                        <span class="label-small">Precio venta:</span>
-                        <span style="color: white; font-weight: bold;">$${i.pre.toLocaleString()}</span>
-                    </div>
-                    <div class="inv-row">
-                        <span class="label-small">Ganancia unitaria:</span>
-                        <span class="profit-badge">+$${ganancia.toLocaleString()} (${margen}%)</span>
-                    </div>
-                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; color: #999;">
-                         Inversión total: <b style="color: var(--red);">$${(costo * i.can).toLocaleString()}</b> |
-                         Si vendes todo: <b style="color: var(--green);">$${((i.pre - costo) * i.can).toLocaleString()}</b>
-                    </div>
-                </div>`;
-        }).join('');
     }
 
     // ====== FUNCIONES PRINCIPALES ======
@@ -430,15 +339,45 @@
         if(isNaN(costo) || isNaN(p)) return alert("Ingresa el costo y precio de venta");
 
         let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-        db.push({ id: Date.now(), nom: n, can: c, costo: costo, pre: p });
+        db.push({
+            id: Date.now(),
+            nom: n,
+            can: c,
+            costo: costo,
+            pre: p
+        });
         localStorage.setItem('STOCK_DB', JSON.stringify(db));
 
+        // Limpiar campos
         document.getElementById('n-prod').value = '';
         document.getElementById('c-prod').value = '';
         document.getElementById('costo-prod').value = '';
         document.getElementById('p-prod').value = '';
 
-        sincronizarConNube();
+        guardarEnNube();
+        actualizarTodo();
+    }
+
+    // 🔥 NUEVAS FUNCIONES DE CONTROL DE INVENTARIO 🔥
+    function ajustarStock(id, cambio) {
+        let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        db = db.map(i => {
+            if(i.id == id) {
+                i.can = Math.max(0, (i.can || 0) + cambio);
+            }
+            return i;
+        });
+        localStorage.setItem('STOCK_DB', JSON.stringify(db));
+        guardarEnNube();
+        actualizarTodo();
+    }
+
+    function eliminarProducto(id) {
+        if(!confirm('¿Eliminar este producto del inventario?')) return;
+        let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        db = db.filter(i => i.id != id);
+        localStorage.setItem('STOCK_DB', JSON.stringify(db));
+        guardarEnNube();
         actualizarTodo();
     }
 
@@ -459,31 +398,21 @@
         if(!cli || !pre) return alert("Faltan datos");
 
         let costoProducto = 0;
-        let nombreProducto = 'Mano de obra';
 
+        // 🔥 DESCUENTO AUTOMÁTICO DEL INVENTARIO AL VENDER 🔥
         if(idProd) {
-            let db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
-            let encontrado = false;
-            
+            let db = JSON.parse(localStorage.getItem('STOCK_DB'));
             db = db.map(i => {
-                if(i.id == idProd) {
-                    if(i.can > 0) {
-                        i.can -= 1;
-                        costoProducto = i.costo || 0;
-                        nombreProducto = i.nom;
-                        encontrado = true;
-                    }
+                if(i.id == idProd && i.can > 0) {
+                    i.can -= 1;  // DESCUENTA AUTOMÁTICAMENTE
+                    costoProducto = i.costo || 0;
                 }
                 return i;
             });
-            
-            if(!encontrado) {
-                return alert("⚠️ No hay stock disponible");
-            }
-            
             localStorage.setItem('STOCK_DB', JSON.stringify(db));
         }
 
+        // Guardar Venta con costo
         let ventas = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
         ventas.push({
             id: Date.now(), cli, mod, tipo,
@@ -492,19 +421,7 @@
         });
         localStorage.setItem('VENTAS_DB', JSON.stringify(ventas));
 
-        // Guardar última venta para impresión
-        ultimaVenta = {
-            cliente: cli,
-            modelo: mod,
-            trabajo: tipo,
-            precio: Number(pre),
-            costo: costoProducto,
-            telefono: tel,
-            fecha: new Date().toLocaleString('es-ES'),
-            productoNombre: nombreProducto
-        };
-
-        sincronizarConNube();
+        guardarEnNube();
 
         const base = window.location.href.substring(0, window.location.href.lastIndexOf("/") + 1);
         linkRecibo = `${base}recibo.html?n=${encodeURIComponent(cli)}&m=${encodeURIComponent(mod)}&t=${encodeURIComponent(tipo)}&p=${pre}`;
@@ -513,8 +430,8 @@
         qr.innerHTML = ""; qr.style.display = "block";
         new QRCode(qr, { text: linkRecibo, width: 140, height: 140 });
         document.getElementById('btn-wa').style.display = "block";
-        document.getElementById('btn-print').style.display = "block";
 
+        // Limpiar campos
         document.getElementById('cli').value = '';
         document.getElementById('mod').value = '';
         document.getElementById('tipo').value = '';
@@ -530,87 +447,103 @@
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent("Hola! Aquí tienes tu recibo: " + linkRecibo)}`);
     }
 
-    function imprimirFactura() {
-        if(!ultimaVenta) {
-            alert("⚠️ No hay factura para imprimir");
-            return;
-        }
-
-        const factura = document.getElementById('factura-print');
-        const ganancia = ultimaVenta.precio - ultimaVenta.costo;
-        
-        factura.innerHTML = `
-            <div class="factura-header">
-                <h2 style="margin: 0;">TABLESCELL-JSV</h2>
-                <p style="margin: 5px 0;">Servicio Técnico Especializado</p>
-                <p style="margin: 5px 0; font-size: 12px;">📞 WhatsApp: ${ultimaVenta.telefono || 'N/A'}</p>
-            </div>
-            
-            <div style="margin: 20px 0;">
-                <div class="factura-row">
-                    <span>Fecha:</span>
-                    <span>${ultimaVenta.fecha}</span>
-                </div>
-                <div class="factura-row">
-                    <span>Cliente:</span>
-                    <span><strong>${ultimaVenta.cliente}</strong></span>
-                </div>
-                <div class="factura-row">
-                    <span>Equipo:</span>
-                    <span>${ultimaVenta.modelo || 'N/A'}</span>
-                </div>
-            </div>
-
-            <div style="border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 15px 0; margin: 15px 0;">
-                <div class="factura-row">
-                    <span>Servicio:</span>
-                    <span>${ultimaVenta.trabajo || 'Reparación'}</span>
-                </div>
-                ${ultimaVenta.productoNombre !== 'Mano de obra' ? `
-                <div class="factura-row">
-                    <span>Repuesto:</span>
-                    <span>${ultimaVenta.productoNombre}</span>
-                </div>
-                ` : ''}
-            </div>
-
-            <div class="factura-total">
-                <div class="factura-row">
-                    <span>TOTAL A PAGAR:</span>
-                    <span>$${ultimaVenta.precio.toLocaleString()}</span>
-                </div>
-            </div>
-
-            <div class="factura-footer">
-                <p style="margin: 5px 0;">¡Gracias por tu confianza!</p>
-                <p style="margin: 5px 0; font-size: 10px;">Garantía según tipo de servicio</p>
-                <p style="margin: 15px 0 5px; font-size: 10px;">★★★★★</p>
-                <p style="margin: 0; font-size: 10px;">Servicio Técnico Profesional</p>
-            </div>
-        `;
-        
-        factura.style.display = 'block';
-        
-        setTimeout(() => {
-            window.print();
-            setTimeout(() => {
-                factura.style.display = 'none';
-            }, 500);
-        }, 100);
-    }
-
     function cambiarEstado(id, nuevo) {
         let v = JSON.parse(localStorage.getItem('VENTAS_DB'));
         v = v.map(x => { if(x.id == id) x.estado = nuevo; return x; });
         localStorage.setItem('VENTAS_DB', JSON.stringify(v));
-        sincronizarConNube();
+        guardarEnNube();
         actualizarTodo();
+    }
+
+    // ====== FUNCIONES DEL BUSCADOR DE INVENTARIO ======
+    function filtrarInventario() {
+        const busqueda = document.getElementById('buscar-prod').value.toLowerCase().trim();
+        const btnClear = document.getElementById('btn-clear');
+
+        // Mostrar/ocultar botón de limpiar
+        btnClear.style.display = busqueda ? 'block' : 'none';
+
+        const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
+        const filtrado = busqueda ? db.filter(i => i.nom.toLowerCase().includes(busqueda)) : db;
+
+        renderizarInventario(filtrado, busqueda);
+    }
+
+    function limpiarBusqueda() {
+        document.getElementById('buscar-prod').value = '';
+        document.getElementById('btn-clear').style.display = 'none';
+        filtrarInventario();
+    }
+
+    function renderizarInventario(productos, busqueda = '') {
+        const lista = document.getElementById('lista-inv');
+        const contador = document.getElementById('search-count');
+
+        if (productos.length === 0) {
+            if (busqueda) {
+                lista.innerHTML = '<div class="no-results"><span>🔍</span>No se encontraron resultados para "' + busqueda + '"</div>';
+                contador.innerHTML = '';
+            } else {
+                lista.innerHTML = '<div class="no-results"><span>📦</span>No hay productos en el inventario</div>';
+                contador.innerHTML = '';
+            }
+            return;
+        }
+
+        // Mostrar contador de búsqueda
+        if (busqueda) {
+            const total = JSON.parse(localStorage.getItem('STOCK_DB')).length;
+            contador.innerHTML = `Mostrando ${productos.length} de ${total} productos`;
+        } else {
+            contador.innerHTML = '';
+        }
+
+        // Renderizar productos con botones de control
+        lista.innerHTML = productos.map(i => {
+            const costo = i.costo || 0;
+            const ganancia = (i.pre || 0) - costo;
+            const margen = costo > 0 ? ((ganancia / costo) * 100).toFixed(0) : 0;
+
+            return `
+                <div class="inv-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 15px;">${i.nom}</strong>
+                        <span style="background: var(--blue); padding: 5px 10px; border-radius: 6px; font-weight: bold;">${i.can} und</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Costo unitario:</span>
+                        <span class="cost-badge">$${costo.toLocaleString()}</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Precio venta:</span>
+                        <span style="color: white; font-weight: bold;">$${i.pre.toLocaleString()}</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Ganancia unitaria:</span>
+                        <span class="profit-badge">+$${ganancia.toLocaleString()} (${margen}%)</span>
+                    </div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; color: #999;">
+                        💰 Inversión total: <b style="color: var(--red);">$${(costo * i.can).toLocaleString()}</b> | 
+                        💵 Si vendes todo: <b style="color: var(--green);">$${((i.pre - costo) * i.can).toLocaleString()}</b>
+                    </div>
+                    
+                    <!-- 🔥 CONTROLES DE INVENTARIO MANUAL 🔥 -->
+                    <div class="stock-controls">
+                        <button class="btn-mini" onclick="ajustarStock(${i.id}, -1)">➖</button>
+                        <span>Ajustar Stock</span>
+                        <button class="btn-mini" onclick="ajustarStock(${i.id}, 1)">➕</button>
+                    </div>
+                    <button class="btn-eliminar" onclick="eliminarProducto(${i.id})">🗑️ Eliminar Producto</button>
+                </div>
+            `;
+        }).join('');
     }
 
     function actualizarTodo() {
         const db = JSON.parse(localStorage.getItem('STOCK_DB')) || [];
         const v = JSON.parse(localStorage.getItem('VENTAS_DB')) || [];
 
+        // Calcular inversión y ganancia total del inventario
         let inversionTotal = 0, gananciaPotencial = 0;
         db.forEach(i => {
             const costo = i.costo || 0;
@@ -621,23 +554,27 @@
         document.getElementById('total-inversion').innerText = '$' + inversionTotal.toLocaleString();
         document.getElementById('total-ganancia').innerText = '$' + gananciaPotencial.toLocaleString();
 
+        // Actualizar Select de Venta
         const sel = document.getElementById('sel-prod');
         sel.innerHTML = '<option value="">-- Solo Mano de Obra --</option>' + db.map(i =>
             `<option value="${i.id}" data-p="${i.pre}">${i.nom} (Stock: ${i.can})</option>`
         ).join('');
 
+        // Renderizar inventario respetando búsqueda activa
         const busqueda = (document.getElementById('buscar-prod').value || '').toLowerCase().trim();
         const filtrado = busqueda ? db.filter(i => i.nom.toLowerCase().includes(busqueda)) : db;
         renderizarInventario(filtrado, busqueda);
 
+        // Estados
         document.getElementById('lista-estados').innerHTML = v.slice().reverse().map(x => `
             <div class="card-info" style="border-left-color:${x.estado=='listo'?'var(--green)':'#f59e0b'}">
                 <b>${x.cli}</b> - ${x.mod}<br>
                 <small>Estado: ${x.estado.toUpperCase()}</small><br>
-                <button onclick="cambiarEstado(${x.id}, 'proceso')" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
-                <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+                <button onclick="cambiarEstado(${x.id}, 'proceso')" style="font-size:9px">EN PROCESO</button>
+                <button onclick="cambiarEstado(${x.id}, 'listo')" style="font-size:9px">LISTO</button>
             </div>`).join('');
 
+        // Caja con ganancias reales
         const h = new Date();
         let m = 0, a = 0, gananciaMes = 0, gananciaAno = 0;
 
@@ -690,4 +627,4 @@
     };
 </script>
 </body>
-</html>
+    </html>
