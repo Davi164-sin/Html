@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0043)https://html-three-nu.vercel.app/aviso.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SERVICIO TÉCNICO TABLESCELL-JSV</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="./SERVICIO TÉCNICO TABLESCELL-JSV_files/qrcode.min.js.descarga"></script>
     <style>
         :root { --blue: #466eea; --green: #25d366; --red: #ff4444; --bg: #121212; --card: #1e1e1e; --gold: #fbbf24; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
@@ -115,24 +115,22 @@
     </div>
     <div class="container">
         <div class="tabs">
-            <button class="active" onclick="tab('venta', event)">Venta</button>
-            <button onclick="tab('inventario', event)">Stock</button>
-            <button onclick="tab('estados', event)">Estados</button>
-            <button onclick="tab('caja', event)">Caja</button>
-            <button onclick="tab('tendencias', event)">Tendencias</button>
+            <button class="active" onclick="tab(&#39;venta&#39;, event)">Venta</button>
+            <button onclick="tab(&#39;inventario&#39;, event)">Stock</button>
+            <button onclick="tab(&#39;estados&#39;, event)">Estados</button>
+            <button onclick="tab(&#39;caja&#39;, event)">Caja</button>
+            <button onclick="tab(&#39;tendencias&#39;, event)">Tendencias</button>
         </div>
 
         <div class="content">
-            <div id="sync-status" class="offline" onclick="forzarSync()" title="Click para sincronizar manualmente">● Desconectado</div>
+            <div id="sync-status" class="online" onclick="forzarSync()" title="Click para sincronizar manualmente">● Sincronizado ✓</div>
 
             <div id="venta" class="section active">
                 <input type="text" id="cli" placeholder="Nombre del Cliente">
                 <input type="text" id="mod" placeholder="Modelo del Celular">
                 <input type="text" id="tipo" placeholder="Trabajo (Ej: Pin de carga)">
                 <input type="number" id="tel" placeholder="WhatsApp del Cliente">
-                <select id="sel-prod" onchange="autoPrecio()">
-                    <option value="">-- Solo Mano de Obra --</option>
-                </select>
+                <select id="sel-prod" onchange="autoPrecio()"><option value="">-- Solo Mano de Obra --</option><option value="1771825974675" data-p="15000">pin de carga (Stock: 12)</option></select>
                 <input type="number" id="pre" placeholder="Precio Total $">
                 <button class="btn btn-blue" onclick="procesarVenta()">REGISTRAR Y DESCONTAR STOCK</button>
                 <div id="qrcode"></div>
@@ -152,11 +150,11 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                         <div>
                             <div class="label-small">INVERSIÓN TOTAL</div>
-                            <h3 style="margin: 5px 0; color: var(--red);" id="total-inversion">$0</h3>
+                            <h3 style="margin: 5px 0; color: var(--red);" id="total-inversion">$120.000</h3>
                         </div>
                         <div>
                             <div class="label-small">GANANCIA POTENCIAL</div>
-                            <h3 style="margin: 5px 0; color: var(--green);" id="total-ganancia">$0</h3>
+                            <h3 style="margin: 5px 0; color: var(--green);" id="total-ganancia">$60.000</h3>
                         </div>
                     </div>
                     <div style="font-size: 11px; color: #999; margin-top: 8px;">
@@ -174,17 +172,87 @@
                 </div>
                 <div class="search-count" id="search-count"></div>
 
-                <div id="lista-inv"></div>
+                <div id="lista-inv">
+                <div class="inv-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 15px;">pin de carga</strong>
+                        <span style="background: var(--blue); padding: 5px 10px; border-radius: 6px; font-weight: bold;">12 und</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Costo unitario:</span>
+                        <span class="cost-badge">$10.000</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Precio venta:</span>
+                        <span style="color: white; font-weight: bold;">$15.000</span>
+                    </div>
+                    <div class="inv-row">
+                        <span class="label-small">Ganancia unitaria:</span>
+                        <span class="profit-badge">+$5000 (50%)</span>
+                    </div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; font-size: 12px; color: #999;">
+                         Inversión total: <b style="color: var(--red);">$120.000</b> |
+                         Si vendes todo: <b style="color: var(--green);">$60.000</b>
+                    </div>
+                </div></div>
             </div>
 
             <div id="estados" class="section">
                 <h3>Estado de Reparaciones</h3>
-                <div id="lista-estados"></div>
+                <div id="lista-estados">
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>cali</b> - huawei<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1774304523988, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1774304523988, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>david</b> - huawei<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1774304486875, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1774304486875, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>Caleño </b> - Motg<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1772491676506, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1772491676506, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>Cs</b> - SAMSUNG <br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1772488447144, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1772488447144, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>cali</b> - huawei<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1772488210542, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1772488210542, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>david</b> - huawei<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1771832280095, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1771832280095, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>mari</b> - S20plus<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1771830173771, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1771830173771, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div>
+            <div class="card-info" style="border-left-color:#f59e0b">
+                <b>Caleño </b> - S20plus<br>
+                <small>Estado: PENDIENTE</small><br>
+                <button onclick="cambiarEstado(1771828609163, &#39;proceso&#39;)" style="font-size:9px; background:var(--blue); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">EN PROCESO</button>
+                <button onclick="cambiarEstado(1771828609163, &#39;listo&#39;)" style="font-size:9px; background:var(--green); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">LISTO</button>
+            </div></div>
             </div>
 
             <div id="caja" class="section">
                 <div class="card-info"><small>TOTAL MES</small><h2 id="m-val">$ 0</h2></div>
-                <div class="card-info" style="border-left-color: var(--green);"><small>TOTAL AÑO</small><h2 id="a-val">$ 0</h2></div>
+                <div class="card-info" style="border-left-color: var(--green);"><small>TOTAL AÑO</small><h2 id="a-val">$ 120.000</h2></div>
 
                 <div class="card-info" style="margin-top: 15px; border-left-color: var(--gold);">
                     <div style="display: flex; justify-content: space-between;">
@@ -194,7 +262,7 @@
                         </div>
                         <div>
                             <div class="label-small">GANANCIAS REALES (AÑO)</div>
-                            <h3 style="margin: 5px 0; color: var(--green);" id="ganancia-ano">$0</h3>
+                            <h3 style="margin: 5px 0; color: var(--green);" id="ganancia-ano">$100.000</h3>
                         </div>
                     </div>
                     <div style="font-size: 11px; color: #999; margin-top: 8px;">
@@ -203,7 +271,35 @@
                 </div>
 
                 <h4 style="margin-top:20px;">Historial</h4>
-                <div id="historial"></div>
+                <div id="historial">
+                <div class="card-info" style="font-size:10px">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>cali</b>
+                        <span style="color: var(--green); font-weight: bold;">$15000</span>
+                    </div>
+                    <div style="margin-top: 4px; color: #999;">Ganancia: <span style="color: var(--green);">+$5000</span></div>
+                </div>
+                <div class="card-info" style="font-size:10px">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>david</b>
+                        <span style="color: var(--green); font-weight: bold;">$15000</span>
+                    </div>
+                    <div style="margin-top: 4px; color: #999;">Ganancia: <span style="color: var(--green);">+$5000</span></div>
+                </div>
+                <div class="card-info" style="font-size:10px">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>Caleño </b>
+                        <span style="color: var(--green); font-weight: bold;">$15000</span>
+                    </div>
+                    
+                </div>
+                <div class="card-info" style="font-size:10px">
+                    <div style="display: flex; justify-content: space-between;">
+                        <b>Cs</b>
+                        <span style="color: var(--green); font-weight: bold;">$15000</span>
+                    </div>
+                    
+                </div></div>
             </div>
 
             <div id="tendencias" class="section">
@@ -275,7 +371,7 @@
     <div id="factura-print"></div>
 
 <script>
-    const CLAVE = "VENTAS-2027-PRO";
+    const CLAVE = "JSV-X7K2-TABLESCELL-9Q";
     const API_URL = "https://html-three-nu.vercel.app/api/sync";
     const SYNC_ID = "tecnico_tablescell";
     let linkRecibo = "";
@@ -401,10 +497,17 @@
     }
 
     // ====== FUNCIONES PRINCIPALES ======
-   function checkLicencia() {
-    document.getElementById('bloqueo').style.display = 'flex';
-    return;
-}
+    function checkLicencia() {
+        let v = localStorage.getItem('APP_VENC');
+        if (!v) {
+            let d = new Date(); d.setDate(d.getDate() - 1);
+            localStorage.setItem('APP_VENC', d.toISOString());
+        }
+        if (new Date() > new Date(localStorage.getItem('APP_VENC'))) {
+            document.getElementById('bloqueo').style.display = 'flex';
+        }
+    }
+
     function activar() {
         if(document.getElementById('key-bloqueo').value === CLAVE) {
             let d = new Date(); d.setFullYear(d.getFullYear() + 1);
@@ -682,5 +785,6 @@
         syncInterval = setInterval(sincronizarConNube, 3000);
     };
 </script>
-</body>
-</html>
+
+
+</body></html>
