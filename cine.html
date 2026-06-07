@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cine David</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan: #00d4ff;
+      --red: #ff3a3a;
+      --bg: #080808;
+      --card: #111;
+      --border: #1e1e1e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* FONDO animado */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(0,212,255,0.04) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(255,58,58,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+
+    /* HEADER */
+    header {
+      text-align: center;
+      padding: 30px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #fff 30%, var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: #555; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+    /* LOGIN */
+    #login-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+    #login-section h2 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 1.4rem; margin-bottom: 16px; color: var(--cyan); }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--cyan); }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary { background: var(--cyan); color: #000; }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-outline { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); margin-top: 8px; }
+
+    /* UPLOAD */
+    #upload-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    #upload-section h2 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; color: var(--cyan); margin-bottom: 14px; }
+
+    .file-label {
+      display: block;
+      border: 2px dashed #2a2a2a;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      color: #555;
+      font-size: 0.85rem;
+    }
+    .file-label:hover { border-color: var(--cyan); color: var(--cyan); }
+    .file-label span { display: block; font-size: 2rem; margin-bottom: 6px; }
+    input[type="file"] { display: none; }
+
+    #filename { color: var(--cyan); font-size: 0.8rem; margin-top: 8px; text-align: center; min-height: 18px; }
+
+    /* PROGRESO */
+    #progress-wrap { margin-top: 12px; display: none; }
+    #progress-bar-bg { background: #1a1a1a; border-radius: 99px; height: 6px; overflow: hidden; }
+    #progress-bar { height: 100%; background: var(--cyan); border-radius: 99px; width: 0%; transition: width 0.3s; }
+    #progress-text { text-align: center; font-size: 0.75rem; color: #555; margin-top: 6px; }
+
+    /* MENSAJES */
+    #msg {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+    #msg.ok { background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); color: var(--cyan); }
+    #msg.err { background: rgba(255,58,58,0.1); border: 1px solid rgba(255,58,58,0.3); color: var(--red); }
+
+    /* LISTA DE PELÍCULAS */
+    #movies-title {
+      font-family: 'Bebas Neue', sans-serif;
+      letter-spacing: 3px;
+      font-size: 1.2rem;
+      color: #444;
+      text-align: center;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+
+    .movie-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      animation: fadeUp 0.4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    video { width: 100%; display: block; background: #000; max-height: 220px; }
+
+    .movie-info { padding: 12px 14px; }
+    .movie-name {
+      font-size: 0.85rem;
+      color: #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+    .movie-actions { display: flex; gap: 8px; }
+    .movie-actions a, .movie-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      letter-spacing: 0.5px;
+    }
+    .btn-download { background: var(--cyan); color: #000; }
+    .btn-delete { background: transparent; color: var(--red); border: 1px solid var(--red) !important; }
+
+    #empty { text-align: center; color: #333; padding: 40px 0; font-size: 0.9rem; display: none; }
+    #empty span { display: block; font-size: 2.5rem; margin-bottom: 10px; }
+
+    #logout-btn { color: #333; font-size: 0.8rem; text-align: center; margin-top: 8px; cursor: pointer; background: none; border: none; width: 100%; }
+    #logout-btn:hover { color: var(--red); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎬 Cine David</h1>
+    <p>Streaming privado</p>
+  </header>
+
+  <div id="msg"></div>
+
+  <!-- LOGIN -->
+  <div id="login-section">
+    <h2>Acceso</h2>
+    <input type="password" id="pwd-input" placeholder="Contraseña" />
+    <button class="btn btn-primary" onclick="login()">INICIAR SESIÓN</button>
+  </div>
+
+  <!-- PANEL ADMIN -->
+  <div id="admin-section" class="hidden">
+    <div id="upload-section">
+      <h2>Subir Película</h2>
+      <label class="file-label" for="file-input">
+        <span>🎞️</span>
+        Toca para elegir un video
+      </label>
+      <input type="file" id="file-input" accept="video/*" onchange="onFileChange(this)">
+      <div id="filename"></div>
+      <div id="progress-wrap">
+        <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+        <div id="progress-text">0%</div>
+      </div>
+      <button class="btn btn-primary" onclick="uploadFile()">⬆️ SUBIR PELÍCULA</button>
+      <button class="btn btn-outline" onclick="loadMovies()">🔄 ACTUALIZAR LISTA</button>
+      <button id="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <div id="movies-title">Películas disponibles</div>
+    <div id="empty"><span>📭</span>No hay películas aún</div>
+    <div id="movies-list"></div>
+  </div>
+
+  <!-- VISTA PÚBLICA -->
+  <div id="public-section" class="hidden">
+    <div id="movies-title" style="display:block">Películas disponibles</div>
+    <div id="empty-pub" style="display:none;text-align:center;color:#333;padding:40px 0"><span style="font-size:2.5rem">📭</span><br>No hay películas aún</div>
+    <div id="public-movies-list"></div>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="loadPublicMovies()">🔄 Actualizar</button>
+  </div>
+</div>
+
+<script>
+  // ── CONFIGURACIÓN ──────────────────────────────────────────
+  const SUPABASE_URL = 'https://blwcifqlnlioekitosjp.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsd2NpZnFsbmxpb2VraXRvc2pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3OTIwMDAsImV4cCI6MjA5NjM2ODAwMH0.tfmQmHSDCaKxkYkphRG3UUM1Y6xp122OMTFqRrcUNXg';
+  const BUCKET = 'Dgkf';
+  const PASSWORD = '123';
+  // ───────────────────────────────────────────────────────────
+
+  let selectedFile = null;
+
+  function showMsg(text, type) {
+    const m = document.getElementById('msg');
+    m.textContent = text;
+    m.className = type;
+    m.style.display = 'block';
+    setTimeout(() => m.style.display = 'none', 4000);
+  }
+
+  function login() {
+    const val = document.getElementById('pwd-input').value;
+    if (val === PASSWORD) {
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('admin-section').classList.remove('hidden');
+      document.getElementById('public-section').classList.add('hidden');
+      loadMovies();
+    } else {
+      showMsg('Contraseña incorrecta', 'err');
+    }
+  }
+
+  document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  function logout() {
+    document.getElementById('login-section').classList.remove('hidden');
+    document.getElementById('admin-section').classList.add('hidden');
+    document.getElementById('pwd-input').value = '';
+  }
+
+  function onFileChange(input) {
+    selectedFile = input.files[0];
+    document.getElementById('filename').textContent = selectedFile ? '📄 ' + selectedFile.name : '';
+  }
+
+  async function uploadFile() {
+    if (!selectedFile) { showMsg('Elige un archivo primero', 'err'); return; }
+
+    const wrap = document.getElementById('progress-wrap');
+    const bar = document.getElementById('progress-bar');
+    const txt = document.getElementById('progress-text');
+    wrap.style.display = 'block';
+
+    const fileName = Date.now() + '_' + selectedFile.name;
+    const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(fileName)}`;
+
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+      xhr.setRequestHeader('Content-Type', selectedFile.type || 'video/mp4');
+      xhr.setRequestHeader('x-upsert', 'true');
+
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const pct = Math.round(e.loaded / e.total * 100);
+          bar.style.width = pct + '%';
+          txt.textContent = pct + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        wrap.style.display = 'none';
+        bar.style.width = '0%';
+        if (xhr.status === 200 || xhr.status === 201) {
+          showMsg('✅ Película subida correctamente', 'ok');
+          selectedFile = null;
+          document.getElementById('filename').textContent = '';
+          document.getElementById('file-input').value = '';
+          loadMovies();
+        } else {
+          showMsg('Error al subir: ' + xhr.responseText, 'err');
+        }
+        resolve();
+      };
+
+      xhr.onerror = () => { showMsg('Error de red', 'err'); wrap.style.display = 'none'; resolve(); };
+      xhr.send(selectedFile);
+    });
+  }
+
+  async function listFiles() {
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prefix: '', limit: 100, offset: 0 })
+    });
+    const data = await r.json();
+    return Array.isArray(data) ? data : [];
+  }
+
+  function publicUrl(name) {
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(name)}`;
+  }
+
+  async function loadMovies() {
+    const list = document.getElementById('movies-list');
+    const empty = document.getElementById('empty');
+    list.innerHTML = '<p style="color:#333;text-align:center;padding:20px">Cargando...</p>';
+
+    const files = await listFiles();
+    const videos = files.filter(f => f.name && /\.(mp4|mkv|webm|mov|avi)$/i.test(f.name));
+
+    list.innerHTML = '';
+    empty.style.display = videos.length === 0 ? 'block' : 'none';
+
+    videos.forEach((f, i) => {
+      const url = publicUrl(f.name);
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.animationDelay = (i * 0.07) + 's';
+      card.innerHTML = `
+        <video controls preload="none">
+          <source src="${url}">
+        </video>
+        <div class="movie-info">
+          <div class="movie-name">🎬 ${f.name.replace(/^\d+_/, '')}</div>
+          <div class="movie-actions">
+            <a class="btn-download" href="${url}" download="${f.name}">⬇️ Descargar</a>
+            <button class="btn-delete" onclick="deleteFile('${f.name}', this)">🗑️ Eliminar</button>
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  async function deleteFile(name, btn) {
+    if (!confirm('¿Eliminar "' + name + '"?')) return;
+    btn.textContent = '...';
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (r.ok) { showMsg('Video eliminado', 'ok'); loadMovies(); }
+    else { showMsg('Error al eliminar', 'err'); btn.textContent = '🗑️ Eliminar'; }
+  }
+
+  // Vista pública (sin login) — solo ver y descargar
+  async function loadPublicMovies() {
+    const list = document.getElementById('public-movies-list');
+    const empty = document.getElementById('empty-pub');
+    list.innerHTML = '<p style="color:#333;text-align:center;padding:20px">Cargando...</p>';
+
+    const files = await listFiles();
+    const videos = files.filter(f => f.name && /\.(mp4|mkv|webm|mov|avi)$/i.test(f.name));
+
+    list.innerHTML = '';
+    empty.style.display = videos.length === 0 ? 'block' : 'none';
+
+    videos.forEach((f, i) => {
+      const url = publicUrl(f.name);
+      const card = document.createElement('div');
+      card.className = 'movie-card';
+      card.style.animationDelay = (i * 0.07) + 's';
+      card.innerHTML = `
+        <video controls preload="none">
+          <source src="${url}">
+        </video>
+        <div class="movie-info">
+          <div class="movie-name">🎬 ${f.name.replace(/^\d+_/, '')}</div>
+          <div class="movie-actions">
+            <a class="btn-download" href="${url}" download="${f.name}" style="display:block;padding:10px;border-radius:8px;font-size:0.8rem;font-weight:600;text-align:center;text-decoration:none;background:var(--cyan);color:#000">⬇️ Descargar</a>
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  // Al cargar: mostrar vista pública automáticamente
+  window.onload = () => {
+    document.getElementById('public-section').classList.remove('hidden');
+    loadPublicMovies();
+  };
+</script>
+</body>
+</html>
