@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David Achipiz | Full Stack Developer Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="#inicio" class="logo">David<span>.dev</span></a>
+            <button class="menu-toggle" id="mobile-menu" aria-label="Abrir menú">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <nav class="nav-menu">
+                <a href="#inicio" class="nav-link active">Inicio</a>
+                <a href="#sobre-mi" class="nav-link">Sobre mí</a>
+                <a href="#habilidades" class="nav-link">Habilidades</a>
+                <a href="#proyectos" class="nav-link">Proyectos</a>
+                <a href="#servicios" class="nav-link">Servicios</a>
+                <a href="#contacto" class="nav-link btn-nav">Contacto</a>
+            </nav>
+        </div>
+    </header>
+
+    <section id="inicio" class="hero-section">
+        <div class="hero-content">
+            <span class="badge">Disponible para nuevos proyectos</span>
+            <h1>Soluciones Web Prácticas con <span class="gradient-text">Inteligencia Artificial</span></h1>
+            <p>Hola, soy David Achipiz. Desarrollador Full Stack especializado en crear aplicaciones web robustas, sistemas en tiempo real e integración de IA local en servidores eficientes.</p>
+            <div class="hero-buttons">
+                <a href="#proyectos" class="btn btn-primary">Ver Proyectos</a>
+                <a href="#contacto" class="btn btn-secondary">Hablemos</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="sobre-mi" class="section-padding">
+        <div class="container">
+            <h2 class="section-title">Sobre Mí</h2>
+            <div class="about-grid">
+                <div class="about-text">
+                    <p>Me apasiona transformar necesidades de negocios reales en código limpio, escalable y eficiente. No solo construyo interfaces visuales, sino que diseño toda la arquitectura lógica y de servidores subyacente.</p>
+                    <p>Mi enfoque se centra en la optimización: desde desplegar bases de datos ligeras como SQLite, hasta configurar entornos Linux y automatizaciones directamente desde terminales como Termux, pasando por la integración de modelos de lenguaje locales con Ollama.</p>
+                </div>
+                <div class="about-stats">
+                    <div class="stat-card">
+                        <h3>Pragmático</h3>
+                        <p>Diseño orientado a resultados y clientes reales.</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Full Stack</h3>
+                        <p>Control total desde el frontend hasta la base de datos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="habilidades" class="section-padding bg-alt">
+        <div class="container">
+            <h2 class="section-title">Habilidades Técnicas</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3>Frontend</h3>
+                    <div class="skill-tags">
+                        <span class="tag">HTML5</span>
+                        <span class="tag">CSS3</span>
+                        <span class="tag">JavaScript (ES6+)</span>
+                        <span class="tag">Diseño Responsive</span>
+                    </div>
+                </div>
+                <div class="skill-category">
+                    <h3>Backend & Data</h3>
+                    <div class="skill-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">Flask</span>
+                        <span class="tag">Node.js</span>
+                        <span class="tag">SQLite</span>
+                        <span class="tag">APIs RESTful</span>
+                    </div>
+                </div>
+                <div class="skill-category">
+                    <h3>Infraestructura e IA</h3>
+                    <div class="skill-tags">
+                        <span class="tag">Ollama (IA Local)</span>
+                        <span class="tag">Servidores Linux</span>
+                        <span class="tag">Termux</span>
+                        <span class="tag">WebSockets (Tiempo Real)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="proyectos" class="section-padding">
+        <div class="container">
+            <h2 class="section-title">Proyectos Destacados</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-content">
+                        <span class="project-meta">Flask + WebSockets</span>
+                        <h3>Sistema de Chat en Tiempo Real con IA</h3>
+                        <p>Plataforma de comunicación interna que integra bots automatizados corriendo localmente mediante Ollama, garantizando privacidad absoluta de los datos.</p>
+                        <div class="project-tags">
+                            <span>Python</span><span>Flask</span><span>Ollama</span><span>JS</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <div class="project-content">
+                        <span class="project-meta">Full Stack</span>
+                        <h3>Sistema de Inventario y Administración</h3>
+                        <p>Software de gestión comercial con control de existencias, reportes de ventas en tiempo real y base de datos SQLite optimizada para entornos pymes.</p>
+                        <div class="project-tags">
+                            <span>Node.js</span><span>SQLite</span><span>Express</span><span>CSS Grid</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicios" class="section-padding bg-alt">
+        <div class="container">
+            <h2 class="section-title">Servicios que Ofrezco</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">🌐</div>
+                    <h3>Desarrollo de Aplicaciones Web</h3>
+                    <p>Sitios y plataformas a la medida, rápidos, seguros y adaptables a cualquier pantalla móvil o de escritorio.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🤖</div>
+                    <h3>Automatización e IA Local</h3>
+                    <p>Creación e integración de asistentes y bots inteligentes usando Ollama, reduciendo costos de servidores en la nube.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">📊</div>
+                    <h3>Sistemas de Gestión Comercial</h3>
+                    <p>Desarrollo de softwares prácticos para administración, control de inventarios, cajas y analítica de ventas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="section-padding">
+        <div class="container">
+            <h2 class="section-title">¿Tienes un proyecto en mente?</h2>
+            <p class="section-subtitle">Hablemos sobre cómo puedo ayudarte a construir una solución eficiente y real.</p>
+            
+            <div class="contact-box">
+                <form id="contact-form" class="contact-form">
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" name="name" required placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" name="email" required placeholder="tu@correo.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" name="message" rows="5" required placeholder="Cuéntame sobre tu proyecto..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Enviar Mensaje</button>
+                    <div id="form-response" class="form-message"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 David Achipiz. Desarrollado con HTML, CSS y JS nativos.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
